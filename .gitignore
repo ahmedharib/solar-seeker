@@ -40,22 +40,14 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 
-# Heavy Datasets (Keep code & sample data, exclude multi-GB raw archives)
-data/NEW2-AerialImageDataset/
-data/unified_dataset/
-data/datasets/
-data/datasets.zip
-solar-seeker/data/images/uncropped_images
+# Data & Docs exclusion (Kept on local machine, excluded from git)
+data/
+docs/
+
+# Archives
 *.zip
 *.tar.gz
 *.tar
-solar-seeker/docs
-
-# Model checkpoints (Git LFS or cloud storage recommendation)
-# Uncomment the following if you store weights externally:
-# *.pth
-# *.pt
-# *.onnx
 
 # IDE & OS
 .vscode/

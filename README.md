@@ -1,100 +1,110 @@
-# Solar Seeker — AI Rooftop Solar Assessment Platform
+# Solar Seeker (v2.0) — AI Rooftop Solar Assessment & Energy Management Platform
 
-Solar Seeker is an AI-driven rooftop photovoltaic (PV) assessment platform calibrated for urban satellite environments (initially calibrated for Beylikdüzü, Istanbul). It extracts building rooftop geometry using deep learning segmentation, queries the European Commission PVGIS API for real-world solar radiation, and generates 25-year financial ROI projections.
+**Version:** `2.0.0`  
+**Calibration:** Beylikdüzü, Istanbul (GSD = 0.15 m/px, EPDK Tariffs)
+
+Solar Seeker is an AI-driven rooftop photovoltaic (PV) assessment platform built for urban satellite environments. It extracts rooftop geometry using deep learning segmentation (U-Net with ResNet-34 backbone), queries the European Commission PVGIS API (v5.3) for solar radiation yield, generates 25-year financial cash flow projections, and features **Phoebe HEMS** (an AI Home Energy Management System with Model Predictive Control battery dispatch).
 
 ---
 
 ## 📁 Project Architecture & Directory Layout
 
-The project is organized into clear, decoupled modules:
-
 ```text
 solar-seeker/
-├── frontend/                 # React + Vite + Tailwind CSS Single-Page Application
+├── frontend/                     # React 19 + Vite + Tailwind CSS Single-Page Application
 │   ├── src/
-│   │   ├── components/       # Header, Stepper, Step1Upload, Step2PolygonSelector, Step3Results
-│   │   ├── App.jsx           # 3-Step Wizard state coordinator
+│   │   ├── components/           # Header, Stepper, Step1Upload, Step2PolygonSelector, Step3Results, Phoebe
+│   │   ├── constants/            # Global physics, EPDK tariffs & theme configurations
+│   │   ├── App.jsx               # Wizard & Studio state coordinator
 │   │   └── main.jsx
-│   ├── public/sample_satellite.png # Built-in sample screenshot for instant testing
+│   ├── public/sample_satellite.png # Default aerial sample image
 │   └── package.json
 │
-├── backend/                  # FastAPI REST API & Physics/Financial Engines
-│   ├── main.py               # Application endpoints (/api/detect_roofs, /api/calculate_solar)
-│   ├── solar_engine.py       # EU PVGIS API (5.3) & 25-Year Financial Math Engine
-│   ├── geometry.py           # OpenCV contour extraction & RDP polygon regularization
-│   └── requirements.txt      # Python backend dependency specifications
+├── backend/                      # FastAPI REST API & Physics/Financial Engines
+│   ├── main.py                   # API routes (/api/detect_roofs, /api/calculate_solar, /api/phoebe/*)
+│   ├── solar_engine.py           # EU PVGIS API (5.3) & 25-Year Financial Math Engine
+│   ├── phoebe_engine.py          # 120-min rolling forecast & MPC battery dispatch simulator
+│   ├── geometry.py               # OpenCV contour extraction & RDP polygon regularization
+│   └── requirements.txt          # Python backend dependencies
 │
 ├── models/
-│   ├── unet/                 # PyTorch U-Net Architecture
-│   │   ├── unet_training.py  # U-Net (ResNet-34) training pipeline with Dice+BCE loss
-│   │   ├── test_model.py     # End-to-end model verification script
-│   │   ├── unet_roof_obstacle.pth # Trained model weights (ImageNet backbone)
-│   │   └── training_history.png, sample_predictions.png, test_result.png
-│   │
-│   └── yolo/                 # YOLO26 Instance/Semantic Segmentation Pipeline
-│       ├── train_yolo26.py   # Standalone YOLO26 training script with auto-split
-│       └── train_yolo26_colab.ipynb # Google Colab GPU training notebook
+│   ├── unet-latest/              # Latest production model weights & evaluation artifacts
+│   │   ├── unet_roof_obstacle.pth # Trained U-Net checkpoint (Inria + Istanbul aerial tiles)
+│   │   ├── sample_predictions.png
+│   │   └── training_history.png
+│   ├── unet/                     # PyTorch U-Net training pipeline & test suite
+│   │   └── unet_training.py
+│   ├── phoebe/                   # Phoebe HEMS load forecasting model (RandomForest/Joblib)
+│   └── yolo/                     # YOLO segmentation training pipelines
 │
-├── data/
-│   ├── datasets/             # Packaged annotation archives
-│   ├── images/               # Satellite & Aerial Imagery
-│   └── scripts/              # Batch aerial image cropping utility
+├── sample_images/                # Standalone sample satellite images
+│   └── sample_satellite.jpeg     # Calibrated Beylikdüzü sample aerial snapshot
 │
-├── docs/                     # Project Specifications & Reference
-└── requirements.txt          # Root Python environment specification
+├── requirements.txt              # Root Python dependency specifications
+└── README.md
 ```
 
 ---
 
-## 🚀 Quickstart Guides
+## 🚀 Quickstart Guide: Running on Your Laptop
 
-### 1. Running the FastAPI Backend Server
+### 1. Prerequisites
+- **Python 3.10+** (tested on Python 3.11 / 3.12)
+- **Node.js 18+** & **npm**
+- **Git** & **Git LFS** (for downloading model weights)
+
+---
+
+### 2. Frontend Setup & Launch
+Navigate to `frontend/`, install dependencies, and start the Vite development server:
+
 ```bash
-# Terminal 1 (Backend):
+# In Terminal 1:
+cd frontend
+npm install
+npm run dev
+```
+
+The web application will open at: **`http://localhost:5173`**  
+*(Click **"Use Sample Image"** on the upload screen to immediately test rooftop detection without needing to take a custom screenshot).*
+
+---
+
+### 3. Backend Setup & Launch
+Create and activate a Python virtual environment, install requirements, and start the FastAPI server:
+
+```bash
+# In Terminal 2:
+# Windows (PowerShell):
+python -m venv solarseeker
+.\solarseeker\Scripts\Activate.ps1
+
+# Linux / macOS:
+# python -m venv solarseeker
+# source solarseeker/bin/activate
+
+# Install dependencies:
+pip install -r backend/requirements.txt
+
+# Start the server:
 cd backend
 uvicorn main:app --reload --port 8000
 ```
-Open interactive Swagger docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-### 2. Running the React Frontend
-```bash
-# Terminal 2 (Frontend):
-cd frontend
-npm run dev
-```
-Open the web app in your browser at: [http://localhost:5173](http://localhost:5173)
-
-#### Key Endpoints:
-- `POST /api/detect_roofs`: Accepts satellite image crop, returns list of regularized polygons with pixel coordinates and $m^2$ area for interactive frontend selection.
-- `POST /api/calculate_solar`: Accepts user-verified rooftop area ($m^2$), queries EU PVGIS, and calculates system size ($kWp$), annual yield ($kWh$), and 25-year ROI.
-- `POST /analyze_roof`: Legacy end-to-end endpoint.
+- Interactive Swagger documentation & API sandbox: **`http://127.0.0.1:8000/docs`**
 
 ---
 
-### 2. Testing the U-Net Model (CLI)
-```bash
-python models/unet/test_model.py
-```
-Automatically loads `models/unet/unet_roof_obstacle.pth`, runs inference on `data/images/test_images_cropped/image.png`, calls the PVGIS API, and saves visual results to `test_result.png`.
+### 4. Key Endpoints
+
+- `POST /api/detect_roofs`: Accepts a satellite image file, executes U-Net inference, regularizes polygons via RDP, and returns pixel coordinates and real-world $m^2$ metrics.
+- `POST /api/calculate_solar`: Sizes the system ($kWp$, 65% packing factor, 0.20 $kWp/m^2$), queries EU PVGIS, and computes 25-year financial ROI and environmental metrics.
+- `GET /api/phoebe/presets`: Returns standard household load profiles (evening peak, high summer load, weekend).
+- `POST /api/phoebe/simulate`: Runs a 120-minute rolling horizon forecast and MPC battery charge/discharge optimization.
 
 ---
 
-### 3. Training YOLO26 Segmentation
+### 5. Customization & Adjustments
 
-#### On Google Colab (Recommended for GPU):
-1. Open Google Colab and upload `models/yolo/train_yolo26_colab.ipynb`.
-2. Enable GPU: **Runtime** ➔ **Change runtime type** ➔ **T4 GPU**.
-3. Upload `data/datasets/solar_seeker_yolo_dataset.zip` and run all cells.
-
-#### Locally or on Linux Server:
-```bash
-python models/yolo/train_yolo26.py --data data/datasets/solar_seeker_yolo_dataset.zip --epochs 60 --batch 4 --imgsz 640
-```
-
----
-
-### 4. Cropping Raw Satellite Images
-```bash
-python data/scripts/crop_images.py
-```
-Processes images from `data/images/test_images_uncropped` into `data/images/test_images_cropped`.
+- **Physical & Economic Assumptions:** Modify [`frontend/src/constants/config.js`](frontend/src/constants/config.js) to adjust electricity tariffs, install cost per kWp, packing factor, or location coordinates.
+- **Model Inference & Polygons:** Adjust segmentation threshold or polygon smoothing in [`backend/main.py`](backend/main.py).
