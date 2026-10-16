@@ -45,9 +45,11 @@ data/NEW2-AerialImageDataset/
 data/unified_dataset/
 data/datasets/
 data/datasets.zip
+solar-seeker/data/images/uncropped_images
 *.zip
 *.tar.gz
 *.tar
+solar-seeker/docs
 
 # Model checkpoints (Git LFS or cloud storage recommendation)
 # Uncomment the following if you store weights externally:
