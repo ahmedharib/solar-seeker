@@ -154,7 +154,7 @@ const LeafletMap = forwardRef(function LeafletMap(
     MAP_CONFIG.tileProviders[provider] || MAP_CONFIG.tileProviders.google;
 
   return (
-    <div className="min-h-[380px] sm:min-h-[420px] rounded-2xl border border-zinc-800 bg-zinc-950 relative overflow-hidden flex flex-col justify-between">
+    <div className="w-full h-full min-h-[440px] rounded-xl border border-zinc-800 bg-zinc-950 relative overflow-hidden flex flex-col justify-between">
       {/* Interactive Leaflet Map Container */}
       <div
         ref={mapContainerRef}
@@ -165,14 +165,14 @@ const LeafletMap = forwardRef(function LeafletMap(
       {/* Subtle Center Reticle (Pointer-Events None so dragging map is unobstructed) */}
       <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
         <div className="relative flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border border-yellow-400/80 bg-yellow-400/10 flex items-center justify-center shadow-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+          <div className="w-8 h-8 rounded-full border border-amber-400/80 bg-amber-400/10 flex items-center justify-center shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
           </div>
         </div>
       </div>
 
       {/* Top HUD Overlay */}
-      <div className="relative z-20 p-3.5 flex items-center justify-between gap-2 pointer-events-none">
+      <div className="relative z-20 p-4 flex items-center justify-between gap-3 pointer-events-none">
         {/* Provider Toggle Pill */}
         <div className="pointer-events-auto inline-flex items-center gap-1 p-1 rounded-full bg-zinc-950/90 border border-zinc-800 backdrop-blur-md">
           {Object.values(MAP_CONFIG.tileProviders).map((p) => {
@@ -182,13 +182,13 @@ const LeafletMap = forwardRef(function LeafletMap(
                 key={p.id}
                 type="button"
                 onClick={() => setProvider(p.id)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
                   active
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <Layers className="w-3 h-3 text-yellow-400 shrink-0 -translate-y-px" />
+                <Layers className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">{p.name}</span>
               </button>
             );
@@ -197,7 +197,7 @@ const LeafletMap = forwardRef(function LeafletMap(
 
         {/* Live Coordinates Badge */}
         <div className="pointer-events-auto flex items-center gap-2">
-          <span className="text-[11px] font-mono px-2.5 py-1.5 rounded-full bg-zinc-950/90 border border-zinc-800 text-zinc-200 backdrop-blur-md leading-none">
+          <span className="text-xs font-mono px-3 py-1.5 rounded-full bg-zinc-950/90 border border-zinc-800 text-zinc-200 backdrop-blur-md leading-none">
             {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E
           </span>
         </div>
@@ -207,9 +207,9 @@ const LeafletMap = forwardRef(function LeafletMap(
       <div className="flex-1 pointer-events-none" />
 
       {/* Bottom Controls Overlay */}
-      <div className="relative z-20 p-3.5 pointer-events-none">
-        <div className="pointer-events-auto flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-950/90 p-2.5 px-3.5 rounded-xl border border-zinc-800/90 backdrop-blur-md">
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+      <div className="relative z-20 p-4 pointer-events-none">
+        <div className="pointer-events-auto flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-950/90 p-3 rounded-xl border border-zinc-800/90 backdrop-blur-md">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
             {/* Zoom Controls */}
             <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
               <button
@@ -218,12 +218,12 @@ const LeafletMap = forwardRef(function LeafletMap(
                   const nextZ = Math.min((mapZoom || MAP_CONFIG.analysisZoom) + 1, MAP_CONFIG.maxZoom);
                   mapInstanceRef.current?.setZoom(nextZ);
                 }}
-                className="px-2.5 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                 title="Zoom In"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
-              <span className="px-2.5 text-[11px] font-mono text-zinc-300 border-x border-zinc-800 leading-none py-1.5">
+              <span className="px-3 text-xs font-mono text-zinc-300 border-x border-zinc-800 leading-none py-1.5">
                 Zoom {mapZoom}/{MAP_CONFIG.maxZoom}
               </span>
               <button
@@ -232,14 +232,14 @@ const LeafletMap = forwardRef(function LeafletMap(
                   const nextZ = Math.max((mapZoom || MAP_CONFIG.analysisZoom) - 1, MAP_CONFIG.minZoom);
                   mapInstanceRef.current?.setZoom(nextZ);
                 }}
-                className="px-2.5 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                 title="Zoom Out"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <span className="text-[11px] text-zinc-400 leading-none">
+            <span className="text-xs text-zinc-400 leading-none">
               {mapZoom === MAP_CONFIG.analysisZoom ? (
                 <span className="text-emerald-400 font-medium">
                   Locked at Analysis Zoom ({MAP_CONFIG.analysisZoom}x)
@@ -250,7 +250,7 @@ const LeafletMap = forwardRef(function LeafletMap(
             </span>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={() => {
@@ -261,13 +261,13 @@ const LeafletMap = forwardRef(function LeafletMap(
                 );
               }}
               disabled={isCapturing}
-              className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-[11px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Reset to Calibrated Beylikdüzü Site at Zoom 19"
             >
-              <Crosshair className="w-3 h-3 text-yellow-400 shrink-0 -translate-y-px" />
+              <Crosshair className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
               <span className="leading-none">Snap {MAP_CONFIG.analysisZoom}x</span>
             </button>
-            <span className="text-[10px] text-zinc-500 hidden md:inline leading-none">
+            <span className="text-[10px] text-zinc-500 hidden md:inline leading-none font-mono">
               {activeProviderConfig.attribution}
             </span>
           </div>

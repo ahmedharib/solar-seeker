@@ -27,6 +27,20 @@ import { THEME_COLORS } from '../constants/theme';
 import { DEFAULT_PHYSICS, DEFAULT_FINANCIALS, CURRENCY } from '../constants/config';
 
 export default function Step3Results({ results, onBackToSelector, onReset }) {
+  const cashflow = results?.financials?.cashflow_schedule || [];
+
+  // Calculate split color offset: Green above 0 (profit), Red below 0 (loss)
+  const gradientOffset = useMemo(() => {
+    if (!cashflow || cashflow.length === 0) return 0;
+    const dataMax = Math.max(...cashflow.map((i) => i.cumulative_net ?? 0));
+    const dataMin = Math.min(...cashflow.map((i) => i.cumulative_net ?? 0));
+
+    if (dataMax <= 0) return 0; // All loss
+    if (dataMin >= 0) return 1; // All profit
+
+    return dataMax / (dataMax - dataMin);
+  }, [cashflow]);
+
   if (!results) return null;
 
   const {
@@ -45,19 +59,6 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
   } = results;
 
   const billOffset = financials?.bill_offset;
-  const cashflow = financials?.cashflow_schedule || [];
-
-  // Calculate split color offset: Green above 0 (profit), Red below 0 (loss)
-  const gradientOffset = useMemo(() => {
-    if (!cashflow || cashflow.length === 0) return 0;
-    const dataMax = Math.max(...cashflow.map((i) => i.cumulative_net ?? 0));
-    const dataMin = Math.min(...cashflow.map((i) => i.cumulative_net ?? 0));
-
-    if (dataMax <= 0) return 0; // All loss
-    if (dataMin >= 0) return 1; // All profit
-
-    return dataMax / (dataMax - dataMin);
-  }, [cashflow]);
 
   return (
     <div className="space-y-8 print:p-0">
@@ -100,63 +101,63 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
         </div>
       </div>
 
-      {/* Top Metric KPI Cards - Yellow Highlighted Report Values & Icons */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Top Metric KPI Cards - Clean White Tabular Figures with Semantic Accents */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* KPI 1: Usable Area */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="leading-none">Usable Solar Area</span>
-            <span className="text-yellow-400 font-mono text-[11px] font-semibold leading-none">
+            <span className="text-amber-400 font-mono text-xs font-semibold leading-none">
               {(assumptions?.packing_factor ? Math.round(assumptions.packing_factor * 100) : Math.round(DEFAULT_PHYSICS.packingFactor * 100))}% Factor
             </span>
           </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight">
-            {net_usable_area_m2} <span className="text-base font-normal text-yellow-400/70">m²</span>
+          <div className="text-3xl font-bold text-white tracking-tight">
+            {net_usable_area_m2} <span className="text-base font-normal text-zinc-400">m²</span>
           </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1">
+          <p className="text-xs text-zinc-500 leading-none mt-1">
             Gross Footprint: <strong className="text-zinc-300 font-mono">{gross_area_m2} m²</strong>
           </p>
         </div>
 
         {/* KPI 2: Peak Power */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="leading-none">Peak Capacity</span>
-            <Zap className="w-4 h-4 text-yellow-400 shrink-0" />
+            <Zap className="w-4 h-4 text-amber-400 shrink-0" />
           </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight">
-            {peakpower_kwp} <span className="text-base font-normal text-yellow-400/70">kWp</span>
+          <div className="text-3xl font-bold text-white tracking-tight">
+            {peakpower_kwp} <span className="text-base font-semibold text-amber-400">kWp</span>
           </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1">
+          <p className="text-xs text-zinc-500 leading-none mt-1">
             ~{Math.round(net_usable_area_m2 / (assumptions?.sqm_per_panel || DEFAULT_PHYSICS.sqmPerPanel))} Monocrystalline Panels
           </p>
         </div>
 
         {/* KPI 3: Annual Energy */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="leading-none">Annual Solar Yield</span>
-            <Sun className="w-4 h-4 text-yellow-400 shrink-0" />
+            <Sun className="w-4 h-4 text-amber-400 shrink-0" />
           </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight">
-            {annual_yield_kwh?.toLocaleString()} <span className="text-base font-normal text-yellow-400/70">kWh</span>
+          <div className="text-3xl font-bold text-white tracking-tight">
+            {annual_yield_kwh?.toLocaleString()} <span className="text-base font-semibold text-amber-400">kWh</span>
           </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1">
+          <p className="text-xs text-zinc-500 leading-none mt-1">
             Specific: <strong className="text-zinc-300 font-mono">{specific_yield_kwh_per_kwp} kWh/kWp</strong>
           </p>
         </div>
 
         {/* KPI 4: Payback Period */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="leading-none">Payback Period</span>
-            <TrendingUp className="w-4 h-4 text-yellow-400 shrink-0" />
+            <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
           </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight">
+          <div className="text-3xl font-bold text-white tracking-tight">
             {financials?.payback_period_years ? `${financials.payback_period_years} Yrs` : 'N/A'}
           </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1">
-            25-Yr Net Profit: <strong className="text-zinc-300 font-mono">{CURRENCY.symbol}{financials?.net_profit_25yr?.toLocaleString()}</strong>
+          <p className="text-xs text-zinc-500 leading-none mt-1">
+            25-Yr Net Profit: <strong className="text-emerald-400 font-mono">{CURRENCY.symbol}{financials?.net_profit_25yr?.toLocaleString()}</strong>
           </p>
         </div>
       </div>
@@ -165,45 +166,45 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
       {billOffset && (
         <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center text-yellow-400 font-semibold shrink-0">
-              ⚡
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400 font-semibold shrink-0">
+              <Zap className="w-5 h-5 text-amber-400" />
             </div>
             <div>
               <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider leading-none">
                 Electric Bill Coverage
               </div>
-              <p className="text-sm text-zinc-200 mt-1">
+              <p className="text-sm text-zinc-200 mt-1.5">
                 This solar array produces enough electricity to cover{' '}
-                <strong className="text-yellow-400 font-semibold">{billOffset.bill_offset_percent}%</strong> of your monthly usage.
+                <strong className="text-emerald-400 font-semibold">{billOffset.bill_offset_percent}%</strong> of your monthly usage.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-8 text-xs text-right font-mono">
             <div>
-              <div className="text-zinc-500 text-[11px] leading-none">Original Bill</div>
+              <div className="text-zinc-500 text-xs leading-none">Original Bill</div>
               <div className="text-white font-bold text-sm mt-1">{CURRENCY.symbol}{billOffset.monthly_bill?.toLocaleString()}/mo</div>
             </div>
             <div>
-              <div className="text-zinc-500 text-[11px] leading-none">Net Bill After Solar</div>
-              <div className="text-yellow-400 font-bold text-sm mt-1">{CURRENCY.symbol}{billOffset.net_monthly_bill_after_solar?.toLocaleString()}/mo</div>
+              <div className="text-zinc-500 text-xs leading-none">Net Bill After Solar</div>
+              <div className="text-emerald-400 font-bold text-sm mt-1">{CURRENCY.symbol}{billOffset.net_monthly_bill_after_solar?.toLocaleString()}/mo</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left: Monthly Solar Generation Bar Chart (Yellow Bars) */}
-        <div className="lg:col-span-7 p-7 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-5">
+      {/* Dual Charts Grid: Symmetrical Equal Heights */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Left: Monthly Solar Generation Bar Chart */}
+        <div className="lg:col-span-7 p-6 sm:p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-yellow-400 shrink-0 -translate-y-px" />
+                <Calendar className="w-4 h-4 text-amber-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">Monthly Solar Energy Yield (kWh)</span>
               </h3>
               <p className="text-xs text-zinc-400 mt-1.5">PVGIS satellite-calibrated monthly irradiance schedule.</p>
             </div>
-            <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 leading-none">
+            <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 leading-none">
               kWh / Month
             </span>
           </div>
@@ -215,6 +216,7 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                 <XAxis dataKey="label" stroke={THEME_COLORS.charts.axisText} fontSize={11} tickLine={false} />
                 <YAxis stroke={THEME_COLORS.charts.axisText} fontSize={11} tickLine={false} />
                 <Tooltip
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.04)' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
@@ -228,7 +230,7 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                           }}
                         >
                           <p className="font-semibold text-white leading-none">{data.label}</p>
-                          <p className="text-yellow-400 font-bold">{data.energy_kwh} kWh</p>
+                          <p className="text-white font-bold">{data.energy_kwh} <span className="text-amber-400">kWh</span></p>
                           <p className="text-zinc-400">≈ {CURRENCY.symbol}{valTl.toLocaleString()} value</p>
                         </div>
                       );
@@ -236,28 +238,32 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                     return null;
                   }}
                 />
-                {/* Yellow Bars */}
                 <Bar dataKey="energy_kwh" fill={THEME_COLORS.charts.monthlyBar} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
+
+          <div className="flex items-center justify-between text-xs text-zinc-500 font-mono pt-2 border-t border-zinc-800/80">
+            <span>Optimal Tilt: {optimal_tilt_deg || DEFAULT_PHYSICS.defaultTiltDeg}°</span>
+            <span>Annual Total: <strong className="text-zinc-300">{annual_yield_kwh?.toLocaleString()} kWh</strong></span>
+          </div>
         </div>
 
-        {/* Right: 25-Year Cumulative Cashflow Chart (Red for Loss Area, Green for Profit Area) */}
-        <div className="lg:col-span-5 p-7 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-5">
+        {/* Right: 25-Year Cumulative Cashflow Chart */}
+        <div className="lg:col-span-5 p-6 sm:p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">25-Year Net Cashflow ({CURRENCY.symbol})</span>
               </h3>
-              <p className="text-xs text-zinc-400 mt-1.5">Realistic compounding lifecycle model with degradation & tariff inflation.</p>
+              <p className="text-xs text-zinc-400 mt-1.5">Compounding model with degradation & tariff inflation.</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
                 Profit
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
                 Loss
               </span>
             </div>
@@ -267,7 +273,6 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={cashflow} margin={{ top: 10, right: 10, left: 5, bottom: 0 }}>
                 <defs>
-                  {/* Fill Gradient: Green on top (profit area), Red on bottom (loss area) */}
                   <linearGradient id="cashflowSplitFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset={0} stopColor={THEME_COLORS.charts.cashflowProfit} stopOpacity={0.45} />
                     <stop offset={gradientOffset} stopColor={THEME_COLORS.charts.cashflowProfit} stopOpacity={0.12} />
@@ -275,7 +280,6 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                     <stop offset={1} stopColor={THEME_COLORS.charts.cashflowLoss} stopOpacity={0.45} />
                   </linearGradient>
 
-                  {/* Stroke Gradient */}
                   <linearGradient id="cashflowSplitStroke" x1="0" y1="0" x2="0" y2="1">
                     <stop offset={0} stopColor={THEME_COLORS.charts.cashflowProfit} stopOpacity={1} />
                     <stop offset={gradientOffset} stopColor={THEME_COLORS.charts.cashflowProfit} stopOpacity={1} />
@@ -294,6 +298,7 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                 />
                 <ReferenceLine y={0} stroke={THEME_COLORS.charts.referenceLine} strokeDasharray="3 3" />
                 <Tooltip
+                  cursor={{ stroke: '#52525b', strokeWidth: 1, strokeDasharray: '3 3' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
@@ -323,20 +328,20 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                             )}
                           </div>
                           {d.annual_yield_kwh > 0 && (
-                            <p className="text-zinc-400 text-[11px] leading-tight">
+                            <p className="text-zinc-400 text-xs leading-tight">
                               Annual Yield: <strong className="text-zinc-200">{d.annual_yield_kwh?.toLocaleString()} kWh</strong>
                             </p>
                           )}
                           {d.effective_rate_tl > 0 && (
-                            <p className="text-zinc-400 text-[11px] leading-tight">
+                            <p className="text-zinc-400 text-xs leading-tight">
                               Est. Tariff: <strong className="text-zinc-200">{CURRENCY.symbol}{d.effective_rate_tl}/kWh</strong>
                             </p>
                           )}
-                          <p className="text-zinc-400 text-[11px] leading-tight">
+                          <p className="text-zinc-400 text-xs leading-tight">
                             Annual Value: <strong className="text-emerald-400">+{CURRENCY.symbol}{d.annual_savings?.toLocaleString()}</strong>
                           </p>
                           {d.inverter_cost > 0 && (
-                            <p className="text-amber-400 text-[11px] leading-tight font-semibold">
+                            <p className="text-amber-400 text-xs leading-tight font-semibold">
                               Inverter Refresh: -{CURRENCY.symbol}{d.inverter_cost?.toLocaleString()}
                             </p>
                           )}
@@ -352,7 +357,6 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                     return null;
                   }}
                 />
-                {/* Split Area: Green above baseValue 0, Red below baseValue 0 */}
                 <Area
                   type="monotone"
                   dataKey="cumulative_net"
@@ -365,7 +369,7 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
             </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/80">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 font-mono pt-2 border-t border-zinc-800/80">
             <span>Model: 0.5%/yr degradation · 4.0%/yr tariff inflation</span>
             <span>Year 11 Inverter Replacement</span>
           </div>
@@ -401,7 +405,7 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
             </div>
             <div className="flex justify-between pt-2.5">
               <span className="text-zinc-400 font-medium">25-Year Net Profit:</span>
-              <span className="font-bold text-yellow-400 font-mono text-sm">
+              <span className="font-bold text-emerald-400 font-mono text-sm">
                 +{CURRENCY.symbol}{financials?.net_profit_25yr?.toLocaleString()}
               </span>
             </div>

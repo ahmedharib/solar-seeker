@@ -3,7 +3,6 @@ import {
   UploadCloud,
   MapPin,
   DollarSign,
-  Sliders,
   Sparkles,
   ArrowRight,
   AlertCircle,
@@ -38,7 +37,6 @@ export default function Step1Upload({
   const [sourceMode, setSourceMode] = useState('upload'); // 'upload' | 'location'
   const [dragActive, setDragActive] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchAddress, setSearchAddress] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [mapZoom, setMapZoom] = useState(MAP_CONFIG.analysisZoom);
@@ -238,13 +236,13 @@ export default function Step1Upload({
         </div>
       )}
 
-      {/* Main Two-Column Grid: Natural Heights (items-start eliminates dead space) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* Main Two-Column Grid: Symmetrical Equal Heights */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Column: Rooftop Imagery Source (Upload OR Location Search) */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="lg:col-span-7 flex flex-col justify-between p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
           {/* Top Bar with Title & Dual Mode Switcher */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-0.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
               <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight leading-none">
                 Rooftop Imagery Source
               </h2>
@@ -285,28 +283,28 @@ export default function Step1Upload({
 
           {/* MODE 1: FILE UPLOAD DROPZONE */}
           {sourceMode === 'upload' && (
-            <div className="space-y-3">
+            <div className="flex-1 flex flex-col justify-between space-y-4">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="leading-none">Top-down aerial screenshot (Google Maps, Apple Maps, or Earth).</span>
                 <button
                   type="button"
                   onClick={loadSampleImage}
                   disabled={loadingSample || isDetecting}
-                  className="px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 inline-flex items-center gap-1.5 font-medium transition-colors shrink-0"
+                  className="px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 inline-flex items-center gap-1.5 font-medium transition-colors shrink-0 cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
                   <span className="leading-none">{loadingSample ? 'Loading...' : 'Use Sample Image'}</span>
                 </button>
               </div>
 
-              {/* Upload Dropzone Container - Natural Height */}
+              {/* Upload Dropzone Container - Symmetrical Flexible Height */}
               <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`min-h-[380px] sm:min-h-[420px] rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden ${
+                className={`flex-1 min-h-[440px] rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden ${
                   dragActive
                     ? 'border-zinc-400 bg-zinc-900/60'
                     : previewUrl
@@ -323,12 +321,12 @@ export default function Step1Upload({
                 />
 
                 {previewUrl ? (
-                  <div className="w-full flex flex-col items-center space-y-4">
-                    <div className="relative w-full max-h-[380px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                  <div className="w-full h-full flex flex-col items-center justify-center space-y-4">
+                    <div className="relative w-full flex-1 max-h-[400px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
                       <img
                         src={previewUrl}
                         alt="Satellite Preview"
-                        className="w-full h-full object-contain max-h-[380px] mx-auto"
+                        className="w-full h-full object-contain max-h-[400px] mx-auto"
                       />
                       <div className="absolute bottom-3 right-3 px-3 py-1 bg-zinc-950/90 border border-zinc-800 rounded-lg text-xs text-zinc-300 font-mono shadow-md">
                         {file?.name || 'satellite_image.png'} •{' '}
@@ -365,8 +363,8 @@ export default function Step1Upload({
 
           {/* MODE 2: LOCATION & ADDRESS SEARCH (Interactive Leaflet Satellite Map) */}
           {sourceMode === 'location' && (
-            <div className="space-y-3">
-              {/* Address Search Bar - Free OSM Nominatim Geocoding + Auto-Zoom to Level 19 */}
+            <div className="flex-1 flex flex-col space-y-4">
+              {/* Address Search Bar */}
               <div className="relative w-full">
                 <form onSubmit={handleAddressSubmit} className="relative w-full">
                   <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -418,24 +416,26 @@ export default function Step1Upload({
               )}
 
               {/* Interactive Satellite Map Viewfinder (Leaflet + Google/Esri Satellite) */}
-              <LeafletMap
-                ref={mapRef}
-                location={location}
-                setLocation={setLocation}
-                mapZoom={mapZoom}
-                setMapZoom={setMapZoom}
-                provider={tileProvider}
-                setProvider={setTileProvider}
-                isCapturing={isCapturing || isDetecting}
-              />
+              <div className="flex-1 min-h-[440px] flex flex-col">
+                <LeafletMap
+                  ref={mapRef}
+                  location={location}
+                  setLocation={setLocation}
+                  mapZoom={mapZoom}
+                  setMapZoom={setMapZoom}
+                  provider={tileProvider}
+                  setProvider={setTileProvider}
+                  isCapturing={isCapturing || isDetecting}
+                />
+              </div>
             </div>
           )}
         </div>
 
-        {/* Right Column: Natural Stacking (No Dead Space) */}
-        <div className="lg:col-span-5 space-y-4">
+        {/* Right Column: Symmetrical Stacking with Fixed Heights & Zero Layout Shift */}
+        <div className="lg:col-span-5 flex flex-col justify-between gap-6">
           {/* Geographical Coordinates Section */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-3.5">
+          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
@@ -451,7 +451,7 @@ export default function Step1Upload({
               </p>
             </div>
 
-            {/* Calibrated Site Selection (Beylikdüzü only) */}
+            {/* Calibrated Site Selection (Beylikdüzü) */}
             <div className="pt-0.5">
               <button
                 type="button"
@@ -479,8 +479,8 @@ export default function Step1Upload({
               </button>
             </div>
 
-            {/* Lat / Lon Inputs (Freely editable by user) */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            {/* Lat / Lon Inputs */}
+            <div className="grid grid-cols-2 gap-4 pt-1">
               <div>
                 <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
                   Latitude (°N)
@@ -512,19 +512,19 @@ export default function Step1Upload({
             </div>
           </div>
 
-          {/* Financial & Energy Profile */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-3.5">
+          {/* Electricity Economics & System Parameters Card (Stable 2x2 Grid, Zero Layout Shift) */}
+          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
             <div className="space-y-1">
               <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-400 shrink-0 -translate-y-px" />
-                <span className="leading-none">Utility & Electricity Economics</span>
+                <span className="leading-none">Electricity & Engineering Economics</span>
               </h3>
               <p className="text-xs text-zinc-400 mt-1">
-                Calibrates net-metering savings and payback schedules.
+                Calibrates net-metering savings, payback schedules, and satellite resolution.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
                   Grid Tariff Rate
@@ -572,87 +572,70 @@ export default function Step1Upload({
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Advanced Engineering Settings Toggle */}
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-xs text-zinc-400 hover:text-zinc-200 inline-flex items-center gap-1.5 transition-colors font-medium"
-              >
-                <Sliders className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
-                <span className="leading-none">
-                  {showAdvanced ? 'Hide Advanced Settings' : 'Advanced Engineering Settings'}
-                </span>
-              </button>
+              <div>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
+                  Turnkey Cost ({CURRENCY.symbol}/kWp)
+                </label>
+                <input
+                  type="number"
+                  step="1000"
+                  min="5000"
+                  value={financials.installCostPerKwp}
+                  onChange={(e) =>
+                    setFinancials({
+                      ...financials,
+                      installCostPerKwp: parseFloat(e.target.value) || DEFAULT_FINANCIALS.installCostPerKwp,
+                    })
+                  }
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs text-white font-mono transition-colors"
+                />
+              </div>
 
-              {showAdvanced && (
-                <div className="grid grid-cols-2 gap-3 pt-3 mt-3 border-t border-zinc-800">
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
-                      Turnkey Cost ({CURRENCY.symbol}/kWp)
-                    </label>
-                    <input
-                      type="number"
-                      step="1000"
-                      min="5000"
-                      value={financials.installCostPerKwp}
-                      onChange={(e) =>
-                        setFinancials({
-                          ...financials,
-                          installCostPerKwp: parseFloat(e.target.value) || DEFAULT_FINANCIALS.installCostPerKwp,
-                        })
-                      }
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label
-                        className={`block text-[11px] font-medium leading-none ${
-                          sourceMode === 'location' ? 'text-zinc-500' : 'text-zinc-400'
-                        }`}
-                      >
-                        GSD (meters/pixel)
-                      </label>
-                      {sourceMode === 'location' && (
-                        <span className="text-[9px] text-zinc-500 font-mono leading-none">
-                          Auto-calibrated
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.05"
-                      max="1.0"
-                      value={gsd}
-                      disabled={sourceMode === 'location'}
-                      onChange={(e) => setGsd(parseFloat(e.target.value) || DEFAULT_PHYSICS.gsd)}
-                      className={`w-full rounded-xl px-3 py-1.5 text-xs font-mono transition-colors ${
-                        sourceMode === 'location'
-                          ? 'bg-zinc-900/60 border border-zinc-800/60 text-zinc-500 cursor-not-allowed select-none opacity-60'
-                          : 'bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-zinc-500'
-                      }`}
-                      title={
-                        sourceMode === 'location'
-                          ? 'GSD is automatically fixed by map tile resolution in Location Search mode'
-                          : 'Ground Sampling Distance'
-                      }
-                    />
-                  </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label
+                    className={`block text-[11px] font-medium leading-none ${
+                      sourceMode === 'location' ? 'text-zinc-500' : 'text-zinc-400'
+                    }`}
+                  >
+                    GSD (meters/pixel)
+                  </label>
+                  {sourceMode === 'location' && (
+                    <span className="text-[9px] text-zinc-500 font-mono leading-none">
+                      Auto-calibrated
+                    </span>
+                  )}
                 </div>
-              )}
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.05"
+                  max="1.0"
+                  value={gsd}
+                  disabled={sourceMode === 'location'}
+                  onChange={(e) => setGsd(parseFloat(e.target.value) || DEFAULT_PHYSICS.gsd)}
+                  className={`w-full rounded-xl px-3 py-2 text-xs font-mono transition-colors ${
+                    sourceMode === 'location'
+                      ? 'bg-zinc-900/60 border border-zinc-800/60 text-zinc-500 cursor-not-allowed select-none opacity-60'
+                      : 'bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-zinc-500'
+                  }`}
+                  title={
+                    sourceMode === 'location'
+                      ? 'GSD is automatically fixed by map tile resolution in Location Search mode'
+                      : 'Ground Sampling Distance'
+                  }
+                />
+              </div>
             </div>
           </div>
 
-          {/* Launch CTA Button - Sits directly below Financial Card with natural spacing */}
+          {/* Launch CTA Button */}
           <button
             type="button"
             onClick={handleAnalyzeClick}
             disabled={(sourceMode === 'upload' && !file) || isDetecting || isCapturing}
-            className={`w-full py-3.5 sm:py-4 px-6 rounded-full font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all shadow-sm ${
+            className={`w-full py-4 px-6 rounded-full font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all shadow-sm ${
               (sourceMode === 'upload' && !file) || isDetecting || isCapturing
                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/60'
                 : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99] cursor-pointer'

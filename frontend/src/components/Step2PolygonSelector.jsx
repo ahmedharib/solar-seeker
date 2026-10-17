@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Check, CheckSquare, Square, Zap, Sparkles, ArrowRight, ArrowLeft, Layers, Info } from 'lucide-react';
+import { Check, Zap, Sparkles, ArrowRight, ArrowLeft, Layers, Info } from 'lucide-react';
 import { THEME_COLORS } from '../constants/theme';
 import { DEFAULT_PHYSICS } from '../constants/config';
 
@@ -73,9 +73,9 @@ export default function Step2PolygonSelector({
   const packingPercent = Math.round(DEFAULT_PHYSICS.packingFactor * 100);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Top instruction banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -94,37 +94,37 @@ export default function Step2PolygonSelector({
           <button
             type="button"
             onClick={selectAll}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors font-medium"
+            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors font-medium cursor-pointer"
           >
             Select All
           </button>
           <button
             type="button"
             onClick={selectLargest}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-zinc-800 transition-colors font-medium inline-flex items-center gap-1.5"
+            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-zinc-800 transition-colors font-medium inline-flex items-center gap-1.5 cursor-pointer"
           >
-            <Sparkles className="w-3 h-3 text-amber-400 shrink-0 -translate-y-px" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
             <span className="leading-none">Select Main Roof</span>
           </button>
           <button
             type="button"
             onClick={clearAll}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-500 border border-zinc-800 transition-colors font-medium"
+            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-500 border border-zinc-800 transition-colors font-medium cursor-pointer"
           >
             Clear
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Column: Interactive Screenshot & SVG Polygon Layer */}
-        <div className="lg:col-span-8 space-y-3">
-          <div className="relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+        <div className="lg:col-span-7 flex flex-col justify-between p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
+          <div className="relative flex-1 min-h-[460px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
             {/* The Uploaded Screenshot */}
             <img
               src={previewUrl}
               alt="Uploaded Satellite View"
-              className="w-full h-auto max-h-[580px] object-contain select-none pointer-events-none block"
+              className="w-full h-auto max-h-[560px] object-contain select-none pointer-events-none block"
             />
 
             {/* SVG Polygon Overlay */}
@@ -144,7 +144,7 @@ export default function Step2PolygonSelector({
                       onClick={() => togglePolygon(poly.id)}
                       onMouseEnter={() => setHoveredPolygon(poly.id)}
                       onMouseLeave={() => setHoveredPolygon(null)}
-                      className={`roof-polygon ${
+                      className={`roof-polygon cursor-pointer ${
                         isSelected ? 'roof-polygon-selected' : 'roof-polygon-unselected'
                       }`}
                     />
@@ -202,7 +202,7 @@ export default function Step2PolygonSelector({
             )}
 
             {/* Visual Legend Overlay (bottom left) */}
-            <div className="absolute bottom-4 left-4 bg-zinc-900/90 border border-zinc-800 px-3.5 py-2 rounded-full flex items-center gap-4 text-xs">
+            <div className="absolute bottom-4 left-4 bg-zinc-900/90 border border-zinc-800 px-3.5 py-2 rounded-full flex items-center gap-4 text-xs backdrop-blur-md">
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full border"
@@ -233,10 +233,10 @@ export default function Step2PolygonSelector({
         </div>
 
         {/* Right Column: Selection Summary & Rooftop List */}
-        <div className="lg:col-span-4 space-y-6 flex flex-col justify-between">
-          <div className="space-y-5">
+        <div className="lg:col-span-5 flex flex-col justify-between gap-6">
+          <div className="space-y-6">
             {/* Live Calculation HUD Card */}
-            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-5">
+            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Live Selection Sizing</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">
@@ -244,26 +244,26 @@ export default function Step2PolygonSelector({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-2 gap-4 pt-1">
                 <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80">
                   <div className="text-[11px] text-zinc-400 font-medium">Gross Footprint</div>
-                  <div className="text-xl font-bold text-white mt-0.5">{summary.grossArea} <span className="text-xs font-normal text-zinc-500">m²</span></div>
+                  <div className="text-xl font-bold text-white mt-1">{summary.grossArea} <span className="text-xs font-normal text-zinc-500">m²</span></div>
                 </div>
 
                 <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80">
                   <div className="text-[11px] text-zinc-400 font-medium">Net Usable ({packingPercent}%)</div>
-                  <div className="text-xl font-bold text-emerald-400 mt-0.5">{summary.netArea} <span className="text-xs font-normal text-zinc-500">m²</span></div>
+                  <div className="text-xl font-bold text-emerald-400 mt-1">{summary.netArea} <span className="text-xs font-normal text-zinc-500">m²</span></div>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
                 <div className="space-y-0.5">
                   <span className="text-[11px] font-medium text-zinc-400">Recommended Array</span>
-                  <div className="text-2xl font-bold text-amber-400">{summary.kwp} <span className="text-sm font-normal text-zinc-400">kWp</span></div>
+                  <div className="text-2xl font-bold text-white">{summary.kwp} <span className="text-sm font-semibold text-amber-400">kWp</span></div>
                 </div>
                 <div className="text-right text-[11px] text-zinc-400 font-mono">
                   ~{Math.round(summary.netArea / DEFAULT_PHYSICS.sqmPerPanel)} Panels
-                  <div className="text-[10px] text-zinc-500">({Math.round(DEFAULT_PHYSICS.panelDensityKwpPerM2 * DEFAULT_PHYSICS.sqmPerPanel * 1000)}W Monocrystalline)</div>
+                  <div className="text-[10px] text-zinc-500">({Math.round(DEFAULT_PHYSICS.panelDensityKwpPerM2 * DEFAULT_PHYSICS.sqmPerPanel * 1000)}W Mono)</div>
                 </div>
               </div>
 
@@ -275,8 +275,8 @@ export default function Step2PolygonSelector({
               </div>
             </div>
 
-            {/* List of Detected Roofs (Scrollable) */}
-            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-3">
+            {/* List of Detected Roofs */}
+            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-zinc-400" />
@@ -287,7 +287,7 @@ export default function Step2PolygonSelector({
                 </span>
               </div>
 
-              <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+              <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
                 {polygons.map((p) => {
                   const isSel = selectedPolygonIds.has(p.id);
                   return (
@@ -336,7 +336,7 @@ export default function Step2PolygonSelector({
               className={`w-full py-4 px-6 rounded-full font-semibold text-sm inline-flex items-center justify-center gap-2.5 transition-all shadow-sm ${
                 summary.count === 0 || isCalculating
                   ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/60'
-                  : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99]'
+                  : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99] cursor-pointer'
               }`}
             >
               {isCalculating ? (
@@ -357,7 +357,7 @@ export default function Step2PolygonSelector({
               type="button"
               onClick={onBack}
               disabled={isCalculating}
-              className="w-full py-2 text-xs font-medium text-zinc-500 hover:text-zinc-300 inline-flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2 text-xs font-medium text-zinc-500 hover:text-zinc-300 inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
               <span className="leading-none">Back to Screenshot Upload</span>
