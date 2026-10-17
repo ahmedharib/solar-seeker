@@ -12,6 +12,13 @@ PROJECT_LIFETIME_YEARS = 25
 GRID_EMISSION_FACTOR_KG_PER_KWH = 0.40  # Approx. Turkish / EU-average grid carbon intensity
 CO2_ABSORBED_PER_TREE_KG_PER_YEAR = 21.0  # Commonly cited figure for one mature tree
 
+# Realistic Financial Modeling Constants
+ANNUAL_PANEL_DEGRADATION_RATE = 0.005      # 0.5% efficiency loss per year (NREL standard)
+ANNUAL_TARIFF_ESCALATION_RATE = 0.04       # 4.0% annual grid electricity price escalation
+INVERTER_REPLACEMENT_YEAR = 11            # Inverter replacement year (typical 10-12 year inverter lifespan)
+INVERTER_REPLACEMENT_COST_FRACTION = 0.12 # ~12% of initial turnkey installation CapEx
+ANNUAL_OM_COST_FRACTION = 0.005           # 0.5% annual Operations & Maintenance of CapEx
+
 MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -187,44 +194,96 @@ def calculate_roi(annual_yield_kwh, peakpower_kwp, electricity_rate=3.50, instal
     # 1. Total Installation Cost
     total_installation_cost = peakpower_kwp * install_cost_per_kwp
     
-    # 2. Annual Financial Savings (Yield * Rate)
-    annual_savings = annual_yield_kwh * electricity_rate
-    
-    # 3. Payback Period (Years)
-    if annual_savings > 0:
-        payback_period_years = total_installation_cost / annual_savings
-    else:
-        payback_period_years = None  # JSON-safe "never pays back"
-        
-    # 4. 25-Year Cash Flow Projection (Simple, not accounting for panel degradation or inflation)
-    lifetime_savings = annual_savings * lifetime_years
-    net_profit = lifetime_savings - total_installation_cost
+    # 2. Year 1 Baseline Annual Savings (Yield * Rate)
+    annual_savings_year1 = annual_yield_kwh * electricity_rate
+    simple_payback_years = (total_installation_cost / annual_savings_year1) if annual_savings_year1 > 0 else None
 
-    # 5. Year-by-year cumulative schedule (for the frontend cashflow chart)
+    # 3. 25-Year Realistic Cash Flow Projection
+    # Accounts for 0.5% annual panel degradation, 4.0% utility tariff escalation,
+    # 0.5% annual O&M, and Year 11 inverter replacement.
     cashflow_schedule = [{
         "year": 0,
+        "annual_yield_kwh": 0.0,
+        "effective_rate_tl": round(electricity_rate, 2),
         "annual_savings": 0.0,
+        "om_cost": 0.0,
+        "inverter_cost": 0.0,
+        "net_cashflow": round(-total_installation_cost, 2),
         "cumulative_savings": 0.0,
         "cumulative_net": round(-total_installation_cost, 2),
+        "is_inverter_replacement": False,
     }]
+
+    cumulative_savings = 0.0
+    cumulative_net = -total_installation_cost
+    realistic_payback_years = None
+
     for year in range(1, lifetime_years + 1):
-        cumulative_savings = annual_savings * year
+        # 0.5% annual panel degradation: year 1 = 100%, year 2 = 99.5%, ...
+        degradation_factor = (1.0 - ANNUAL_PANEL_DEGRADATION_RATE) ** (year - 1)
+        year_yield = annual_yield_kwh * degradation_factor
+
+        # 4.0% annual electricity tariff escalation
+        inflation_factor = (1.0 + ANNUAL_TARIFF_ESCALATION_RATE) ** (year - 1)
+        year_rate = electricity_rate * inflation_factor
+
+        # Electricity savings value generated this year
+        year_savings = year_yield * year_rate
+
+        # 0.5% annual O&M of CapEx, escalating with inflation
+        om_cost = (total_installation_cost * ANNUAL_OM_COST_FRACTION) * inflation_factor
+
+        # Inverter replacement at Year 11 (~12% of initial installation cost)
+        inverter_cost = (total_installation_cost * INVERTER_REPLACEMENT_COST_FRACTION) if year == INVERTER_REPLACEMENT_YEAR else 0.0
+
+        net_cashflow = year_savings - om_cost - inverter_cost
+        prev_cumulative_net = cumulative_net
+
+        cumulative_savings += year_savings
+        cumulative_net += net_cashflow
+
+        # Exact linear interpolation for the break-even crossing point
+        if prev_cumulative_net < 0 and cumulative_net >= 0 and realistic_payback_years is None:
+            needed = -prev_cumulative_net
+            gained = cumulative_net - prev_cumulative_net
+            fraction = (needed / gained) if gained > 0 else 0.0
+            realistic_payback_years = round((year - 1) + fraction, 2)
+
         cashflow_schedule.append({
             "year": year,
-            "annual_savings": round(annual_savings, 2),
+            "annual_yield_kwh": round(year_yield, 1),
+            "effective_rate_tl": round(year_rate, 2),
+            "annual_savings": round(year_savings, 2),
+            "om_cost": round(om_cost, 2),
+            "inverter_cost": round(inverter_cost, 2),
+            "net_cashflow": round(net_cashflow, 2),
             "cumulative_savings": round(cumulative_savings, 2),
-            "cumulative_net": round(cumulative_savings - total_installation_cost, 2),
+            "cumulative_net": round(cumulative_net, 2),
+            "is_inverter_replacement": year == INVERTER_REPLACEMENT_YEAR,
         })
+
+    payback_period_years = realistic_payback_years if realistic_payback_years is not None else (
+        round(simple_payback_years, 2) if simple_payback_years is not None else None
+    )
 
     result = {
         "total_installation_cost": round(total_installation_cost, 2),
-        "annual_savings": round(annual_savings, 2),
-        "monthly_savings": round(annual_savings / 12.0, 2),
-        "payback_period_years": round(payback_period_years, 2) if payback_period_years is not None else None,
-        "lifetime_savings_25yr": round(lifetime_savings, 2),
-        "net_profit_25yr": round(net_profit, 2),
-        "roi_percent_25yr": round(net_profit / total_installation_cost * 100.0, 1) if total_installation_cost > 0 else None,
+        "annual_savings": round(annual_savings_year1, 2),
+        "monthly_savings": round(annual_savings_year1 / 12.0, 2),
+        "payback_period_years": payback_period_years,
+        "simple_payback_years": round(simple_payback_years, 2) if simple_payback_years is not None else None,
+        "lifetime_savings_25yr": round(cumulative_savings, 2),
+        "net_profit_25yr": round(cumulative_net, 2),
+        "roi_percent_25yr": round(cumulative_net / total_installation_cost * 100.0, 1) if total_installation_cost > 0 else None,
         "cashflow_schedule": cashflow_schedule,
+        "financial_model": {
+            "type": "realistic_lifecycle",
+            "degradation_rate_percent": round(ANNUAL_PANEL_DEGRADATION_RATE * 100, 2),
+            "tariff_escalation_rate_percent": round(ANNUAL_TARIFF_ESCALATION_RATE * 100, 2),
+            "inverter_replacement_year": INVERTER_REPLACEMENT_YEAR,
+            "inverter_replacement_cost": round(total_installation_cost * INVERTER_REPLACEMENT_COST_FRACTION, 2),
+            "annual_om_rate_percent": round(ANNUAL_OM_COST_FRACTION * 100, 2),
+        },
     }
 
     # 6. Bill offset metrics (only when the user supplied their monthly bill)
@@ -232,7 +291,7 @@ def calculate_roi(annual_yield_kwh, peakpower_kwp, electricity_rate=3.50, instal
         annual_bill = monthly_bill * 12.0
         annual_consumption_kwh = annual_bill / electricity_rate
         bill_offset_percent = annual_yield_kwh / annual_consumption_kwh * 100.0
-        net_monthly_bill = max(0.0, monthly_bill - annual_savings / 12.0)
+        net_monthly_bill = max(0.0, monthly_bill - annual_savings_year1 / 12.0)
         surplus_kwh = max(0.0, annual_yield_kwh - annual_consumption_kwh)
 
         result["bill_offset"] = {

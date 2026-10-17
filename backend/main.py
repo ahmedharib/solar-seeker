@@ -279,6 +279,9 @@ async def calculate_solar(req: SolarCalculationRequest):
                 "system_loss_percent": SYSTEM_LOSS_PERCENT,
                 "electricity_rate": req.electricity_rate,
                 "install_cost_per_kwp": req.install_cost_per_kwp,
+                "degradation_rate_percent": financials.get("financial_model", {}).get("degradation_rate_percent", 0.5),
+                "tariff_escalation_rate_percent": financials.get("financial_model", {}).get("tariff_escalation_rate_percent", 4.0),
+                "inverter_replacement_year": financials.get("financial_model", {}).get("inverter_replacement_year", 11),
             },
         }
 

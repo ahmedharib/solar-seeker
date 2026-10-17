@@ -251,7 +251,7 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                 <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">25-Year Net Cashflow ({CURRENCY.symbol})</span>
               </h3>
-              <p className="text-xs text-zinc-400 mt-1.5">Net cumulative savings after turnkey CapEx payoff.</p>
+              <p className="text-xs text-zinc-400 mt-1.5">Realistic compounding lifecycle model with degradation & tariff inflation.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
@@ -300,17 +300,52 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                       const isProfit = (d.cumulative_net || 0) >= 0;
                       return (
                         <div
-                          className="border p-3 rounded-xl text-xs space-y-1 shadow-lg font-mono"
+                          className="border p-3 rounded-xl text-xs space-y-1.5 shadow-lg font-mono min-w-[210px]"
                           style={{
                             backgroundColor: THEME_COLORS.charts.tooltipBg,
                             borderColor: THEME_COLORS.charts.tooltipBorder,
                           }}
                         >
-                          <p className="font-semibold text-white leading-none">Year {d.year}</p>
-                          <p className="text-zinc-400">Savings: {CURRENCY.symbol}{d.cumulative_savings?.toLocaleString()}</p>
-                          <p className={`font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {isProfit ? 'Net Profit: +' : 'Net Loss / CapEx: '}{CURRENCY.symbol}{d.cumulative_net?.toLocaleString()}
+                          <div className="flex items-center justify-between border-b border-zinc-800 pb-1">
+                            <span className="font-bold text-white">Year {d.year}</span>
+                            {d.is_inverter_replacement ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none">
+                                Inverter Refresh
+                              </span>
+                            ) : isProfit ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
+                                Profitable
+                              </span>
+                            ) : (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
+                                Payoff Phase
+                              </span>
+                            )}
+                          </div>
+                          {d.annual_yield_kwh > 0 && (
+                            <p className="text-zinc-400 text-[11px] leading-tight">
+                              Annual Yield: <strong className="text-zinc-200">{d.annual_yield_kwh?.toLocaleString()} kWh</strong>
+                            </p>
+                          )}
+                          {d.effective_rate_tl > 0 && (
+                            <p className="text-zinc-400 text-[11px] leading-tight">
+                              Est. Tariff: <strong className="text-zinc-200">{CURRENCY.symbol}{d.effective_rate_tl}/kWh</strong>
+                            </p>
+                          )}
+                          <p className="text-zinc-400 text-[11px] leading-tight">
+                            Annual Value: <strong className="text-emerald-400">+{CURRENCY.symbol}{d.annual_savings?.toLocaleString()}</strong>
                           </p>
+                          {d.inverter_cost > 0 && (
+                            <p className="text-amber-400 text-[11px] leading-tight font-semibold">
+                              Inverter Refresh: -{CURRENCY.symbol}{d.inverter_cost?.toLocaleString()}
+                            </p>
+                          )}
+                          <div className="pt-1 border-t border-zinc-800">
+                            <p className={`font-bold leading-tight ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {isProfit ? 'Net Profit: +' : 'Net Position: '}
+                              {CURRENCY.symbol}{d.cumulative_net?.toLocaleString()}
+                            </p>
+                          </div>
                         </div>
                       );
                     }
@@ -328,6 +363,11 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
                 />
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/80">
+            <span>Model: 0.5%/yr degradation · 4.0%/yr tariff inflation</span>
+            <span>Year 11 Inverter Replacement</span>
           </div>
         </div>
       </div>
@@ -430,6 +470,18 @@ export default function Step3Results({ results, onBackToSelector, onReset }) {
               <span className="text-zinc-400">Optimal Tilt Angle:</span>
               <span className="text-zinc-200 font-mono">
                 {optimal_tilt_deg ?? DEFAULT_PHYSICS.defaultTiltDeg}°
+              </span>
+            </div>
+            <div className="flex justify-between pt-2.5">
+              <span className="text-zinc-400">PV Degradation:</span>
+              <span className="text-zinc-200 font-mono">
+                {assumptions?.degradation_rate_percent ?? 0.5}% / yr
+              </span>
+            </div>
+            <div className="flex justify-between pt-2.5">
+              <span className="text-zinc-400">Tariff Escalation:</span>
+              <span className="text-zinc-200 font-mono">
+                +{assumptions?.tariff_escalation_rate_percent ?? 4.0}% / yr
               </span>
             </div>
           </div>
