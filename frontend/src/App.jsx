@@ -34,11 +34,12 @@ export default function App() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState(null);
 
-  // Action: Run U-Net Detection on uploaded screenshot
-  const handleRunDetection = async () => {
-    if (!file) {
+  // Action: Run U-Net Detection on uploaded screenshot or captured map viewport
+  const handleRunDetection = async (overrideFile) => {
+    const targetFile = overrideFile instanceof File ? overrideFile : file;
+    if (!targetFile) {
       setError(
-        'Please upload a satellite screenshot or click "Use Sample Image".',
+        'Please upload a satellite screenshot or use Location Search to target a rooftop.',
       );
       return;
     }
@@ -48,7 +49,7 @@ export default function App() {
       setError(null);
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", targetFile);
       formData.append("gsd", gsd.toString());
 
       const res = await fetch("/api/detect_roofs", {
@@ -142,60 +143,60 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-7">
         {/* TAB 1: Rooftop AI Vision Workflow */}
-        {activeTab === "vision" && (
-          <div className="space-y-6 sm:space-y-7">
-            {/* Step Progress Stepper */}
-            <Stepper
-              currentStep={currentStep}
-              onStepClick={(stepId) => setCurrentStep(stepId)}
-              maxStepAllowed={maxStepAllowed}
-            />
+        <div className={activeTab === "vision" ? "space-y-6 sm:space-y-7" : "hidden"}>
+          {/* Step Progress Stepper */}
+          <Stepper
+            currentStep={currentStep}
+            onStepClick={(stepId) => setCurrentStep(stepId)}
+            maxStepAllowed={maxStepAllowed}
+          />
 
-            {/* Dynamic Wizard Steps */}
-            <div>
-              {currentStep === 1 && (
-                <Step1Upload
-                  file={file}
-                  setFile={setFile}
-                  previewUrl={previewUrl}
-                  setPreviewUrl={setPreviewUrl}
-                  location={location}
-                  setLocation={setLocation}
-                  financials={financials}
-                  setFinancials={setFinancials}
-                  gsd={gsd}
-                  setGsd={setGsd}
-                  onRunDetection={handleRunDetection}
-                  isDetecting={isDetecting}
-                  error={error}
-                />
-              )}
+          {/* Dynamic Wizard Steps */}
+          <div>
+            {currentStep === 1 && (
+              <Step1Upload
+                file={file}
+                setFile={setFile}
+                previewUrl={previewUrl}
+                setPreviewUrl={setPreviewUrl}
+                location={location}
+                setLocation={setLocation}
+                financials={financials}
+                setFinancials={setFinancials}
+                gsd={gsd}
+                setGsd={setGsd}
+                onRunDetection={handleRunDetection}
+                isDetecting={isDetecting}
+                error={error}
+              />
+            )}
 
-              {currentStep === 2 && (
-                <Step2PolygonSelector
-                  detectionResult={detectionResult}
-                  previewUrl={previewUrl}
-                  selectedPolygonIds={selectedPolygonIds}
-                  setSelectedPolygonIds={setSelectedPolygonIds}
-                  onCalculateSolar={handleCalculateSolar}
-                  isCalculating={isCalculating}
-                  onBack={() => setCurrentStep(1)}
-                />
-              )}
+            {currentStep === 2 && (
+              <Step2PolygonSelector
+                detectionResult={detectionResult}
+                previewUrl={previewUrl}
+                selectedPolygonIds={selectedPolygonIds}
+                setSelectedPolygonIds={setSelectedPolygonIds}
+                onCalculateSolar={handleCalculateSolar}
+                isCalculating={isCalculating}
+                onBack={() => setCurrentStep(1)}
+              />
+            )}
 
-              {currentStep === 3 && (
-                <Step3Results
-                  results={results}
-                  onBackToSelector={() => setCurrentStep(2)}
-                  onReset={handleReset}
-                />
-              )}
-            </div>
+            {currentStep === 3 && (
+              <Step3Results
+                results={results}
+                onBackToSelector={() => setCurrentStep(2)}
+                onReset={handleReset}
+              />
+            )}
           </div>
-        )}
+        </div>
 
         {/* TAB 2: Phoebe */}
-        {activeTab === "phoebe" && <Phoebe />}
+        <div className={activeTab === "phoebe" ? "block" : "hidden"}>
+          <Phoebe isTabActive={activeTab === "phoebe"} />
+        </div>
       </main>
     </div>
   );

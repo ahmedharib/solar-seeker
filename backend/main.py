@@ -399,3 +399,155 @@ async def simulate_phoebe(
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=400)
 
+
+# ==========================================
+# 6. Free Geocoding & Satellite Tile Capture
+# ==========================================
+import math
+import requests as http_requests
+from concurrent.futures import ThreadPoolExecutor
+from fastapi.responses import Response
+
+TILE_SIZE = 256
+ANALYSIS_ZOOM_DEFAULT = 19
+CAPTURE_SIZE_DEFAULT = 512
+
+TILE_URLS = {
+    "google": "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+    "esri": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+}
+
+
+def latlon_to_global_pixels(lat: float, lon: float, zoom: int):
+    lat_rad = math.radians(max(-85.0511, min(85.0511, lat)))
+    n = 2.0 ** zoom
+    x = (lon + 180.0) / 360.0 * n * TILE_SIZE
+    y = (
+        (1.0 - math.log(math.tan(lat_rad) + (1.0 / math.cos(lat_rad))) / math.pi)
+        / 2.0
+        * n
+        * TILE_SIZE
+    )
+    return x, y
+
+
+def fetch_single_tile(provider: str, z: int, x: int, y: int):
+    max_idx = (2 ** z) - 1
+    x_wrapped = x % (2 ** z)
+    y_clamped = max(0, min(max_idx, y))
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SolarSeeker/1.0"
+    }
+
+    primary_tpl = TILE_URLS.get(provider, TILE_URLS["google"])
+    fallback_tpl = TILE_URLS["esri"] if provider == "google" else TILE_URLS["google"]
+
+    for tpl in (primary_tpl, fallback_tpl):
+        url = tpl.format(x=x_wrapped, y=y_clamped, z=z)
+        try:
+            resp = http_requests.get(url, headers=headers, timeout=5)
+            if resp.status_code == 200 and len(resp.content) > 400:
+                arr = np.frombuffer(resp.content, np.uint8)
+                img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                if img is not None:
+                    return img
+        except Exception:
+            continue
+
+    return np.zeros((TILE_SIZE, TILE_SIZE, 3), dtype=np.uint8)
+
+
+@app.get("/api/geocode")
+def geocode_address(q: str):
+    """
+    Free address geocoding using OpenStreetMap Nominatim.
+    """
+    query = (q or "").strip()
+    if not query:
+        return JSONResponse({"success": False, "error": "Empty search query."}, status_code=400)
+
+    try:
+        resp = http_requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": query, "format": "json", "limit": 5, "addressdetails": 1},
+            headers={"User-Agent": "SolarSeeker-RooftopAI/1.0 (https://github.com/solar-seeker)"},
+            timeout=6,
+        )
+        results = resp.json() if resp.status_code == 200 else []
+        formatted = [
+            {
+                "display_name": item.get("display_name"),
+                "lat": float(item["lat"]),
+                "lon": float(item["lon"]),
+            }
+            for item in results
+            if "lat" in item and "lon" in item
+        ]
+        return {"success": True, "results": formatted}
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@app.get("/api/capture_satellite")
+def capture_satellite_tile(
+    lat: float,
+    lon: float,
+    zoom: int = ANALYSIS_ZOOM_DEFAULT,
+    size: int = CAPTURE_SIZE_DEFAULT,
+    provider: str = "google",
+):
+    """
+    Stitches a high-resolution 512x512 satellite image centered at (lat, lon)
+    at the penultimate zoom level (Zoom 19) for U-Net rooftop segmentation.
+    """
+    try:
+        clamped_zoom = max(15, min(20, int(zoom)))
+        crop_size = max(256, min(1024, int(size)))
+        center_px, center_py = latlon_to_global_pixels(lat, lon, clamped_zoom)
+
+        half = crop_size // 2
+        min_px = int(math.floor(center_px - half))
+        min_py = int(math.floor(center_py - half))
+        max_px = min_px + crop_size
+        max_py = min_py + crop_size
+
+        min_tx = min_px // TILE_SIZE
+        max_tx = (max_px - 1) // TILE_SIZE
+        min_ty = min_py // TILE_SIZE
+        max_ty = (max_py - 1) // TILE_SIZE
+
+        grid_w = (max_tx - min_tx + 1) * TILE_SIZE
+        grid_h = (max_ty - min_ty + 1) * TILE_SIZE
+        canvas = np.zeros((grid_h, grid_w, 3), dtype=np.uint8)
+
+        coords = [
+            (tx, ty)
+            for ty in range(min_ty, max_ty + 1)
+            for tx in range(min_tx, max_tx + 1)
+        ]
+
+        with ThreadPoolExecutor(max_workers=min(9, len(coords))) as pool:
+            tiles = list(
+                pool.map(lambda c: fetch_single_tile(provider, clamped_zoom, c[0], c[1]), coords)
+            )
+
+        for (tx, ty), tile_img in zip(coords, tiles):
+            ox = (tx - min_tx) * TILE_SIZE
+            oy = (ty - min_ty) * TILE_SIZE
+            if tile_img.shape[:2] != (TILE_SIZE, TILE_SIZE):
+                tile_img = cv2.resize(tile_img, (TILE_SIZE, TILE_SIZE))
+            canvas[oy : oy + TILE_SIZE, ox : ox + TILE_SIZE] = tile_img
+
+        start_x = min_px - (min_tx * TILE_SIZE)
+        start_y = min_py - (min_ty * TILE_SIZE)
+        cropped = canvas[start_y : start_y + crop_size, start_x : start_x + crop_size]
+
+        ok, buf = cv2.imencode(".png", cropped)
+        if not ok:
+            raise RuntimeError("Failed to encode stitched satellite image.")
+
+        return Response(content=buf.tobytes(), media_type="image/png")
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+

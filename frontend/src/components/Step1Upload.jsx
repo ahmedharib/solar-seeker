@@ -8,8 +8,6 @@ import {
   ArrowRight,
   AlertCircle,
   Search,
-  Plus,
-  Minus,
 } from 'lucide-react';
 import {
   CALIBRATED_SITE,
@@ -18,6 +16,7 @@ import {
   MAP_CONFIG,
   CURRENCY,
 } from '../constants/config';
+import LeafletMap from './LeafletMap';
 
 export default function Step1Upload({
   file,
@@ -35,13 +34,18 @@ export default function Step1Upload({
   error,
 }) {
   const fileInputRef = useRef(null);
+  const mapRef = useRef(null);
   const [sourceMode, setSourceMode] = useState('upload'); // 'upload' | 'location'
   const [dragActive, setDragActive] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchAddress, setSearchAddress] = useState('');
-  const [mapZoom, setMapZoom] = useState(MAP_CONFIG.defaultZoom);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [mapZoom, setMapZoom] = useState(MAP_CONFIG.analysisZoom);
+  const [tileProvider, setTileProvider] = useState(MAP_CONFIG.defaultProvider);
   const [isLocating, setIsLocating] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [locationError, setLocationError] = useState(null);
 
   const handleFiles = (selectedFile) => {
     if (!selectedFile) return;
@@ -93,6 +97,7 @@ export default function Step1Upload({
   const handleAddressChange = (e) => {
     const val = e.target.value;
     setSearchAddress(val);
+    setLocationError(null);
 
     // If user enters or pastes direct coordinates (e.g. "41.0026, 28.6417")
     const coordMatch = val.trim().match(/^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/);
@@ -105,41 +110,121 @@ export default function Step1Upload({
     }
   };
 
-  const handleAddressSubmit = (e) => {
+  // Fly to a target coordinate and automatically zoom in to the penultimate zoom level (Zoom 19)
+  const applyTargetLocation = async (lat, lon, displayLabel) => {
+    const cleanLat = parseFloat(Number(lat).toFixed(6));
+    const cleanLon = parseFloat(Number(lon).toFixed(6));
+    setLocation({ lat: cleanLat, lon: cleanLon });
+    setMapZoom(MAP_CONFIG.analysisZoom);
+    if (displayLabel) {
+      setSearchAddress(displayLabel);
+    }
+    setSearchSuggestions([]);
+    await mapRef.current?.flyToLocationAndZoom(cleanLat, cleanLon, MAP_CONFIG.analysisZoom);
+  };
+
+  const handleAddressSubmit = async (e) => {
     if (e) e.preventDefault();
     const query = searchAddress.trim();
     if (!query) return;
 
     setIsLocating(true);
-    // 1. Direct coordinate format
-    const coordMatch = query.match(/^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/);
-    if (coordMatch) {
-      const lat = parseFloat(coordMatch[1]);
-      const lon = parseFloat(coordMatch[3]);
-      if (!isNaN(lat) && !isNaN(lon)) {
-        setLocation({ lat, lon });
-        setIsLocating(false);
+    setLocationError(null);
+    setSearchSuggestions([]);
+
+    try {
+      // 1. Direct coordinate format (e.g. "41.0026, 28.6417")
+      const coordMatch = query.match(/^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/);
+      if (coordMatch) {
+        const lat = parseFloat(coordMatch[1]);
+        const lon = parseFloat(coordMatch[3]);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          await applyTargetLocation(lat, lon);
+          return;
+        }
+      }
+
+      // 2. Calibrated site shortcut
+      const lower = query.toLowerCase();
+      if (lower === 'beylikdüzü' || lower === 'beylikduzu' || lower === 'beylikdüzü, istanbul') {
+        await applyTargetLocation(CALIBRATED_SITE.lat, CALIBRATED_SITE.lon, CALIBRATED_SITE.name);
         return;
       }
-    }
 
-    // 2. Named geocoding simulation
-    const lower = query.toLowerCase();
-    if (lower.includes('beylikdüzü') || lower.includes('beylikduzu') || lower.includes('istanbul')) {
-      setLocation({ lat: CALIBRATED_SITE.lat, lon: CALIBRATED_SITE.lon });
-    } else {
-      let hash = 0;
-      for (let i = 0; i < query.length; i++) hash = (hash << 5) - hash + query.charCodeAt(i);
-      const latOffset = ((Math.abs(hash) % 600) / 10000) * (hash % 2 === 0 ? 1 : -1);
-      const lonOffset = (((Math.abs(hash) >> 3) % 600) / 10000) * (hash % 2 === 0 ? -1 : 1);
-      setLocation({
-        lat: parseFloat((CALIBRATED_SITE.lat + latOffset).toFixed(4)),
-        lon: parseFloat((CALIBRATED_SITE.lon + lonOffset).toFixed(4)),
-      });
-    }
+      // 3. Free OpenStreetMap Nominatim Geocoding via Backend
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
 
-    setTimeout(() => setIsLocating(false), 250);
+      if (res.ok && data.success && data.results && data.results.length > 0) {
+        const top = data.results[0];
+        await applyTargetLocation(top.lat, top.lon, top.display_name);
+        if (data.results.length > 1) {
+          setSearchSuggestions(data.results.slice(0, 4));
+        }
+      } else {
+        setLocationError('Location not found. Try a street, district, city, or lat, lon coordinates.');
+      }
+    } catch {
+      setLocationError('Could not reach geocoding service. You can pan the map or enter coordinates directly.');
+    } finally {
+      setIsLocating(false);
+    }
   };
+
+  // Unified Analyze CTA: If in Location Search mode, auto-zooms to level before last (19x), captures satellite frame, and runs U-Net
+  const handleAnalyzeClick = async () => {
+    if (sourceMode === 'upload') {
+      onRunDetection();
+      return;
+    }
+
+    try {
+      setIsCapturing(true);
+      setLocationError(null);
+
+      // 1. Automatically zoom map to the penultimate level (Zoom 19 of 20)
+      if (mapZoom !== MAP_CONFIG.analysisZoom) {
+        setMapZoom(MAP_CONFIG.analysisZoom);
+      }
+      await mapRef.current?.flyToLocationAndZoom(
+        location.lat,
+        location.lon,
+        MAP_CONFIG.analysisZoom
+      );
+
+      // 2. Capture the 512x512 Zoom-19 satellite image centered on (lat, lon)
+      const params = new URLSearchParams({
+        lat: location.lat.toString(),
+        lon: location.lon.toString(),
+        zoom: MAP_CONFIG.analysisZoom.toString(),
+        size: MAP_CONFIG.captureSizePx.toString(),
+        provider: tileProvider,
+      });
+
+      const res = await fetch(`/api/capture_satellite?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to capture satellite imagery at current coordinates.');
+      }
+
+      const blob = await res.blob();
+      const capturedFile = new File([blob], 'satellite_location_capture.png', {
+        type: 'image/png',
+      });
+      const url = URL.createObjectURL(blob);
+
+      setFile(capturedFile);
+      setPreviewUrl(url);
+      setGsd(DEFAULT_PHYSICS.gsd);
+
+      // 3. Immediately run U-Net rooftop detection with the captured satellite image
+      await onRunDetection(capturedFile);
+    } catch (err) {
+      setLocationError(err.message || 'Failed to capture satellite view for analysis.');
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -278,117 +363,71 @@ export default function Step1Upload({
             </div>
           )}
 
-          {/* MODE 2: LOCATION & ADDRESS SEARCH */}
+          {/* MODE 2: LOCATION & ADDRESS SEARCH (Interactive Leaflet Satellite Map) */}
           {sourceMode === 'location' && (
             <div className="space-y-3">
-              {/* Address Search Bar - Synchronizes Coordinates Automatically */}
-              <form onSubmit={handleAddressSubmit} className="relative w-full">
-                <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchAddress}
-                  onChange={handleAddressChange}
-                  placeholder="Enter street address, city, or coordinates (e.g. Istanbul, 41.0026, 28.6417)..."
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl pl-10 pr-24 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none transition-colors font-sans"
-                />
-                <button
-                  type="submit"
-                  disabled={isLocating}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
-                >
-                  {isLocating ? (
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
-                  ) : (
-                    <span className="leading-none">Locate</span>
-                  )}
-                </button>
-              </form>
+              {/* Address Search Bar - Free OSM Nominatim Geocoding + Auto-Zoom to Level 19 */}
+              <div className="relative w-full">
+                <form onSubmit={handleAddressSubmit} className="relative w-full">
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchAddress}
+                    onChange={handleAddressChange}
+                    placeholder="Search street address, district, city, or coordinates (e.g. Beylikdüzü, 41.0026, 28.6417)..."
+                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl pl-10 pr-24 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none transition-colors font-sans"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLocating}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {isLocating ? (
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    ) : (
+                      <span className="leading-none">Locate</span>
+                    )}
+                  </button>
+                </form>
 
-              {/* Viewfinder Canvas - Clean & Uncluttered (No target box) */}
-              <div className="min-h-[380px] sm:min-h-[420px] rounded-2xl border border-zinc-800 bg-zinc-950 relative overflow-hidden flex flex-col justify-between p-4">
-                {/* Visual Imagery Background Layer */}
-                {previewUrl ? (
-                  <div className="absolute inset-0 z-0">
-                    <img
-                      src={previewUrl}
-                      alt="Satellite Map View"
-                      className="w-full h-full object-cover opacity-85"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/80 pointer-events-none" />
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 z-0 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:20px_20px] flex items-center justify-center opacity-60">
-                    <div className="w-72 h-72 rounded-full border border-zinc-800/80 flex items-center justify-center">
-                      <div className="w-48 h-48 rounded-full border border-zinc-800/60 flex items-center justify-center">
-                        <div className="w-24 h-24 rounded-full border border-zinc-700/40" />
-                      </div>
-                    </div>
+                {/* Optional Geocoding Disambiguation Dropdown */}
+                {searchSuggestions.length > 1 && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-zinc-950 border border-zinc-800 rounded-xl shadow-xl overflow-hidden divide-y divide-zinc-800/80">
+                    {searchSuggestions.map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => applyTargetLocation(item.lat, item.lon, item.display_name)}
+                        className="w-full text-left px-3.5 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                      >
+                        <span className="truncate">{item.display_name}</span>
+                        <span className="text-[10px] font-mono text-yellow-400 shrink-0">
+                          {item.lat.toFixed(4)}, {item.lon.toFixed(4)}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
-
-                {/* Viewfinder Header Overlay */}
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] text-zinc-300 font-medium backdrop-blur-sm">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                    <span className="leading-none">Phoebe Spatial Tile Stream</span>
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-zinc-800 text-zinc-400 backdrop-blur-sm leading-none">
-                      {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E
-                    </span>
-                  </div>
-                </div>
-
-                {/* Spacer */}
-                <div className="relative z-10 flex-1 min-h-[140px]" />
-
-                {/* Viewfinder Bottom Controls & Stage Action */}
-                <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setMapZoom((z) => Math.min(z + 1, MAP_CONFIG.maxZoom))}
-                        className="px-2.5 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
-                        title="Zoom In"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="px-2 text-[11px] font-mono text-zinc-400 border-x border-zinc-800">
-                        {mapZoom}x
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setMapZoom((z) => Math.max(z - 1, MAP_CONFIG.minZoom))}
-                        className="px-2.5 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
-                        title="Zoom Out"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <span className="text-[11px] text-zinc-400 hidden sm:inline leading-none">
-                      High-Res Spatial Imagery (GSD ~{gsd}m)
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={loadSampleImage}
-                    disabled={loadingSample || isDetecting}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200 transition-all inline-flex items-center justify-center gap-1.5 shadow-md active:scale-[0.98]"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-950 shrink-0 -translate-y-px" />
-                    <span className="leading-none">
-                      {previewUrl
-                        ? 'Rooftop Staged • Reload'
-                        : loadingSample
-                        ? 'Staging...'
-                        : 'Stage Rooftop for AI Vision'}
-                    </span>
-                  </button>
-                </div>
               </div>
+
+              {locationError && (
+                <div className="px-3.5 py-2 rounded-xl bg-amber-950/60 border border-amber-800/70 text-amber-200 text-[11px] flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
+                  <span className="leading-none">{locationError}</span>
+                </div>
+              )}
+
+              {/* Interactive Satellite Map Viewfinder (Leaflet + Google/Esri Satellite) */}
+              <LeafletMap
+                ref={mapRef}
+                location={location}
+                setLocation={setLocation}
+                mapZoom={mapZoom}
+                setMapZoom={setMapZoom}
+                provider={tileProvider}
+                setProvider={setTileProvider}
+                isCapturing={isCapturing || isDetecting}
+              />
             </div>
           )}
         </div>
@@ -416,11 +455,10 @@ export default function Step1Upload({
             <div className="pt-0.5">
               <button
                 type="button"
-                onClick={() => {
-                  setLocation({ lat: CALIBRATED_SITE.lat, lon: CALIBRATED_SITE.lon });
-                  setSearchAddress(CALIBRATED_SITE.name);
-                }}
-                className={`text-xs px-3.5 py-1.5 rounded-full border transition-all inline-flex items-center gap-2 ${
+                onClick={() =>
+                  applyTargetLocation(CALIBRATED_SITE.lat, CALIBRATED_SITE.lon, CALIBRATED_SITE.name)
+                }
+                className={`text-xs px-3.5 py-1.5 rounded-full border transition-all inline-flex items-center gap-2 cursor-pointer ${
                   Math.abs(location.lat - CALIBRATED_SITE.lat) < 0.001 &&
                   Math.abs(location.lon - CALIBRATED_SITE.lon) < 0.001
                     ? 'bg-zinc-100 text-zinc-950 font-semibold border-zinc-100 shadow-sm'
@@ -612,22 +650,33 @@ export default function Step1Upload({
           {/* Launch CTA Button - Sits directly below Financial Card with natural spacing */}
           <button
             type="button"
-            onClick={onRunDetection}
-            disabled={!file || isDetecting}
+            onClick={handleAnalyzeClick}
+            disabled={(sourceMode === 'upload' && !file) || isDetecting || isCapturing}
             className={`w-full py-3.5 sm:py-4 px-6 rounded-full font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all shadow-sm ${
-              !file || isDetecting
+              (sourceMode === 'upload' && !file) || isDetecting || isCapturing
                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/60'
-                : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99]'
+                : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99] cursor-pointer'
             }`}
           >
-            {isDetecting ? (
+            {isCapturing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin shrink-0" />
+                <span className="leading-none">
+                  Locking {MAP_CONFIG.analysisZoom}x Zoom & Capturing Satellite Frame...
+                </span>
+              </>
+            ) : isDetecting ? (
               <>
                 <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin shrink-0" />
                 <span className="leading-none">Scanning Rooftops with U-Net Vision...</span>
               </>
             ) : (
               <>
-                <span className="leading-none">Detect Rooftops & Verify Footprint</span>
+                <span className="leading-none">
+                  {sourceMode === 'location'
+                    ? `Zoom ${MAP_CONFIG.analysisZoom}x & Analyze Rooftops`
+                    : 'Detect Rooftops & Verify Footprint'}
+                </span>
                 <ArrowRight className="w-4 h-4 shrink-0 -translate-y-px" />
               </>
             )}
@@ -637,3 +686,4 @@ export default function Step1Upload({
     </div>
   );
 }
+

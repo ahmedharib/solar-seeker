@@ -30,7 +30,7 @@ import {
 import { THEME_COLORS } from '../constants/theme';
 import { PHOEBE_CONFIG, CURRENCY } from '../constants/config';
 
-export default function Phoebe() {
+export default function Phoebe({ isTabActive = true }) {
   const fileInputRef = useRef(null);
 
   // Input Mode: 'sample' (data/phoebe-test-data.csv) | 'upload' (Custom CSV)
@@ -54,6 +54,13 @@ export default function Phoebe() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speedIndex, setSpeedIndex] = useState(0); // 0 = 1x, 1 = 2x, 2 = 4x
+
+  // Auto-pause timelapse if user switches away to another tab
+  useEffect(() => {
+    if (!isTabActive && isPlaying) {
+      setIsPlaying(false);
+    }
+  }, [isTabActive, isPlaying]);
 
   // Run simulation against /api/phoebe/simulate
   const handleRunSimulation = async (overrideMode, overridePreset, overrideFile) => {
@@ -94,19 +101,13 @@ export default function Phoebe() {
 
       setSimulation(data);
       setCurrentStepIndex(0);
-      setIsPlaying(true); // Automatically start the timelapse when results arrive
+      setIsPlaying(false); // Do not auto-play; require explicit user action to start
     } catch (err) {
       setError(err.message || 'An error occurred while communicating with Phoebe HEMS engine.');
     } finally {
       setIsSimulating(false);
     }
   };
-
-  // Auto-load the built-in test dataset on first mount so the user sees Phoebe in action right away
-  useEffect(() => {
-    handleRunSimulation('sample', PHOEBE_CONFIG.presets[0].id, null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Timelapse interval timer
   useEffect(() => {
@@ -138,7 +139,6 @@ export default function Phoebe() {
     setCsvFile(file);
     setSourceMode('upload');
     setError(null);
-    handleRunSimulation('upload', selectedPreset, file);
   };
 
   const handleDrag = (e) => {
@@ -280,9 +280,9 @@ export default function Phoebe() {
                 type="button"
                 onClick={() => {
                   setSourceMode('sample');
-                  handleRunSimulation('sample', selectedPreset, null);
+                  setError(null);
                 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   sourceMode === 'sample'
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -294,8 +294,11 @@ export default function Phoebe() {
 
               <button
                 type="button"
-                onClick={() => setSourceMode('upload')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                onClick={() => {
+                  setSourceMode('upload');
+                  setError(null);
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   sourceMode === 'upload'
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -329,9 +332,9 @@ export default function Phoebe() {
                       type="button"
                       onClick={() => {
                         setSelectedPreset(preset.id);
-                        handleRunSimulation('sample', preset.id, null);
+                        setError(null);
                       }}
-                      className={`text-left p-3.5 rounded-xl border transition-all ${
+                      className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
                         active
                           ? 'bg-zinc-900 border-yellow-400/60 shadow-sm'
                           : 'bg-zinc-950/70 border-zinc-800/80 hover:border-zinc-700'
@@ -343,7 +346,7 @@ export default function Phoebe() {
                         </span>
                         {active && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 leading-none">
-                            Active
+                            Selected
                           </span>
                         )}
                       </div>
@@ -384,6 +387,9 @@ export default function Phoebe() {
                   <p className="text-xs font-semibold text-white">{csvFile.name}</p>
                   <p className="text-[11px] text-zinc-400">
                     {(csvFile.size / 1024).toFixed(1)} KB · Click or drop another CSV to replace
+                  </p>
+                  <p className="text-[10px] font-mono text-yellow-400 pt-1">
+                    ✓ CSV staged — Click "Run Simulation" below to forecast
                   </p>
                 </div>
               ) : (
@@ -492,132 +498,226 @@ export default function Phoebe() {
             </div>
           )}
 
-          {/* Run / Re-run Timelapse Button */}
+          {/* Primary Run / Re-run Simulation Button */}
           <button
             type="button"
             onClick={() => handleRunSimulation()}
-            disabled={isSimulating}
-            className="w-full py-3 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs inline-flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+            disabled={isSimulating || (sourceMode === 'upload' && !csvFile)}
+            className={`w-full py-3 px-5 rounded-full font-semibold text-xs inline-flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer ${
+              !simulation
+                ? 'bg-yellow-400 hover:bg-yellow-300 text-zinc-950 shadow-yellow-400/20'
+                : 'bg-white hover:bg-zinc-200 text-zinc-950'
+            } ${isSimulating || (sourceMode === 'upload' && !csvFile) ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             {isSimulating ? (
               <>
                 <div className="w-3.5 h-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin shrink-0" />
-                <span className="leading-none">Running 120-Minute MPC Forecast...</span>
+                <span className="leading-none">Forecasting Demand & Calculating MPC Dispatch...</span>
+              </>
+            ) : !simulation ? (
+              <>
+                <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 ml-0.5" />
+                <span className="leading-none">Run 120-Minute Peak Simulation</span>
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 -translate-y-px" />
-                <span className="leading-none">Run 120-Minute Peak Timelapse</span>
+                <RotateCcw className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
+                <span className="leading-none">Re-run Simulation</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* Interactive Timelapse Playback Bar */}
-      {simulation && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+      {/* Pre-Simulation Standby State */}
+      {!simulation && (
+        <div className="p-8 sm:p-12 rounded-2xl bg-zinc-900/30 border border-zinc-800 text-center space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 flex items-center justify-center mx-auto">
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <div className="max-w-xl mx-auto space-y-2">
+            <h3 className="text-base font-bold text-white tracking-tight">
+              Ready to Forecast & Optimize Battery Dispatch
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Phoebe uses an AI RandomForest model trained on historical load data to forecast 120 minutes of power demand during the EPDK peak window (17:00–22:00 at {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}/kWh). Model Predictive Control (MPC) schedules battery discharge to shave costly spikes and lower your electricity bill.
+            </p>
+          </div>
+          <div className="pt-2">
             <button
               type="button"
-              onClick={() => {
-                if (currentStepIndex >= totalSteps - 1) {
-                  setCurrentStepIndex(0);
-                  setIsPlaying(true);
-                } else {
-                  setIsPlaying(!isPlaying);
-                }
-              }}
-              className="w-9 h-9 rounded-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
-              title={isPlaying ? 'Pause Timelapse' : 'Play Timelapse'}
+              onClick={() => handleRunSimulation()}
+              disabled={isSimulating || (sourceMode === 'upload' && !csvFile)}
+              className="py-3 px-6 rounded-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-bold text-xs inline-flex items-center gap-2 transition-all shadow-md shadow-yellow-400/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPlaying ? (
-                <Pause className="w-4 h-4 fill-zinc-950" />
+              {isSimulating ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
+                  <span>Forecasting Demand & Calculating MPC Dispatch...</span>
+                </>
               ) : (
-                <Play className="w-4 h-4 fill-zinc-950 ml-0.5" />
+                <>
+                  <Play className="w-3.5 h-3.5 fill-zinc-950 ml-0.5" />
+                  <span>Run 120-Minute Peak Simulation</span>
+                </>
               )}
             </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsPlaying(false);
-                setCurrentStepIndex(0);
-              }}
-              className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
-              title="Restart from 17:00"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsPlaying(false);
-                setCurrentStepIndex(totalSteps - 1);
-              }}
-              className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
-              title="Skip to End (18:59)"
-            >
-              <FastForward className="w-3.5 h-3.5" />
-            </button>
-
-            <div className="pl-2 border-l border-zinc-800">
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-yellow-400 shrink-0 -translate-y-px" />
-                <span className="text-sm font-bold text-white font-mono leading-none">
-                  {currentStep?.timestamp || '17:00'}
-                </span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 leading-none">
-                  Min {currentStepIndex + 1} / {totalSteps}
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-400 mt-1 leading-none">
-                Source: <span className="text-zinc-200 font-medium">{simulation.source_label}</span>
-              </p>
-            </div>
           </div>
-
-          {/* Timeline Scrubber */}
-          <div className="flex-1 max-w-xl flex items-center gap-3">
-            <span className="text-[11px] font-mono text-zinc-500">17:00</span>
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, totalSteps - 1)}
-              value={currentStepIndex}
-              onChange={(e) => {
-                setIsPlaying(false);
-                setCurrentStepIndex(Number(e.target.value));
-              }}
-              className="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
-            />
-            <span className="text-[11px] font-mono text-zinc-500">18:59</span>
-          </div>
-
-          {/* Speed Selector */}
-          <div className="flex items-center gap-1.5 self-end md:self-auto">
-            <span className="text-[11px] text-zinc-500 mr-1 leading-none">Speed:</span>
-            {PHOEBE_CONFIG.playbackSpeeds.map((s, idx) => (
-              <button
-                key={s.label}
-                type="button"
-                onClick={() => setSpeedIndex(idx)}
-                className={`text-xs font-mono px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                  speedIndex === idx
-                    ? 'bg-zinc-800 text-yellow-400 border-yellow-400/40 font-semibold'
-                    : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-6 text-[11px] text-zinc-500 pt-2 font-mono">
+            <span>✓ EPDK 3-tier peak shaving</span>
+            <span>✓ 180-min rolling history</span>
+            <span>✓ Zero rooftop vision interference</span>
           </div>
         </div>
       )}
 
-      {/* 4 Live KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Post-Simulation Results & Interactive Timelapse */}
+      {simulation && (
+        <>
+          {/* Interactive Timelapse Playback Bar */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {/* Play / Pause / Resume Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentStepIndex >= totalSteps - 1) {
+                    setCurrentStepIndex(0);
+                    setIsPlaying(true);
+                  } else {
+                    setIsPlaying(!isPlaying);
+                  }
+                }}
+                className="px-4 py-2 rounded-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 flex items-center gap-2 font-semibold text-xs transition-colors shrink-0 cursor-pointer shadow-sm shadow-yellow-400/20"
+                title={
+                  isPlaying
+                    ? 'Pause Timelapse'
+                    : currentStepIndex >= totalSteps - 1
+                    ? 'Replay Timelapse'
+                    : currentStepIndex === 0
+                    ? 'Start Timelapse'
+                    : 'Resume Timelapse'
+                }
+              >
+                {isPlaying ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5 fill-zinc-950 shrink-0" />
+                    <span className="leading-none">Pause Timelapse</span>
+                  </>
+                ) : currentStepIndex >= totalSteps - 1 ? (
+                  <>
+                    <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                    <span className="leading-none">Replay Timelapse</span>
+                  </>
+                ) : currentStepIndex === 0 ? (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 ml-0.5" />
+                    <span className="leading-none">Start Timelapse</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 ml-0.5" />
+                    <span className="leading-none">Resume Timelapse</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setCurrentStepIndex(0);
+                }}
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                title="Restart from 17:00"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setCurrentStepIndex(totalSteps - 1);
+                }}
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                title="Skip to End (18:59)"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="pl-2 border-l border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-yellow-400 shrink-0 -translate-y-px" />
+                  <span className="text-sm font-bold text-white font-mono leading-none">
+                    {currentStep?.timestamp || '17:00'}
+                  </span>
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 leading-none">
+                    Min {currentStepIndex + 1} / {totalSteps}
+                  </span>
+                  {isPlaying ? (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none animate-pulse">
+                      Live Playing
+                    </span>
+                  ) : currentStepIndex >= totalSteps - 1 ? (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 leading-none">
+                      Completed
+                    </span>
+                  ) : currentStepIndex > 0 ? (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 leading-none">
+                      Paused
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 leading-none">
+                      Ready to Play
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-400 mt-1 leading-none">
+                  Source: <span className="text-zinc-200 font-medium">{simulation.source_label}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Timeline Scrubber */}
+            <div className="flex-1 max-w-xl flex items-center gap-3">
+              <span className="text-[11px] font-mono text-zinc-500">17:00</span>
+              <input
+                type="range"
+                min={0}
+                max={Math.max(0, totalSteps - 1)}
+                value={currentStepIndex}
+                onChange={(e) => {
+                  setIsPlaying(false);
+                  setCurrentStepIndex(Number(e.target.value));
+                }}
+                className="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
+              />
+              <span className="text-[11px] font-mono text-zinc-500">18:59</span>
+            </div>
+
+            {/* Speed Selector */}
+            <div className="flex items-center gap-1.5 self-end md:self-auto">
+              <span className="text-[11px] text-zinc-500 mr-1 leading-none">Speed:</span>
+              {PHOEBE_CONFIG.playbackSpeeds.map((s, idx) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  onClick={() => setSpeedIndex(idx)}
+                  className={`text-xs font-mono px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                    speedIndex === idx
+                      ? 'bg-zinc-800 text-yellow-400 border-yellow-400/40 font-semibold'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 4 Live KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Grid Usage Reduction */}
         <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-zinc-400">
@@ -955,6 +1055,8 @@ export default function Phoebe() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

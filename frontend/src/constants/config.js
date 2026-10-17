@@ -40,10 +40,31 @@ export const DEFAULT_PHYSICS = {
 };
 
 // Spatial Map Viewfinder Configuration
+// Max zoom is 20; penultimate zoom ("level before last") is 19 (~0.15m/px GSD)
 export const MAP_CONFIG = {
   defaultZoom: 19,
-  minZoom: 15,
-  maxZoom: 21,
+  analysisZoom: 19,
+  minZoom: 3,
+  maxZoom: 20,
+  captureSizePx: 512,
+  defaultProvider: 'google',
+  nominatimUrl: 'https://nominatim.openstreetmap.org/search',
+  tileProviders: {
+    google: {
+      id: 'google',
+      name: 'Google Satellite',
+      url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+      maxNativeZoom: 20,
+      attribution: 'Imagery © Google',
+    },
+    esri: {
+      id: 'esri',
+      name: 'Esri World Imagery',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      maxNativeZoom: 19,
+      attribution: 'Tiles © Esri, Maxar, Earthstar Geographics',
+    },
+  },
 };
 
 // Phoebe HEMS (AI Home Energy Management System) Defaults
