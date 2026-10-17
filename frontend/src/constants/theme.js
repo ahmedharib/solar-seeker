@@ -44,9 +44,11 @@ export const THEME_COLORS = {
     cashflowProfit: '#22c55e',    // Green profit area (cumulative net savings > 0)
     cashflowLoss: '#ef4444',      // Red loss area (payback / CapEx investment phase)
     withoutModelUsage: '#ef4444', // Red line/area: Grid usage without Phoebe AI
+    naiveBatteryUsage: '#f59e0b', // Amber line: Naive / greedy battery grid usage
     withModelUsage: '#22c55e',    // Green line/area: Grid usage with Phoebe AI
     batteryDischarge: '#facc15',  // Yellow line/bar: Phoebe BESS output (kW)
     withoutModelCost: '#ef4444',  // Red line/area: Cumulative cost without model (₺)
+    naiveBatteryCost: '#f59e0b',  // Amber line: Cumulative cost with naive battery (₺)
     withModelCost: '#22c55e',     // Green line/area: Cumulative cost with Phoebe AI (₺)
     gridLines: '#27272a',         // zinc-800 grid lines
     axisText: '#71717a',          // zinc-500 axis labels

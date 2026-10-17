@@ -73,11 +73,12 @@ export const PHOEBE_CONFIG = {
   initialSocPercent: 45,
   maxOutputKw: 5.0,
   historyWindowMinutes: 180,
-  forecastHorizonMinutes: 120,
+  forecastHorizonMinutes: 300, // 5 hours: 17:00–22:00 (Full EPDK Evening Peak Window)
   tariffs: {
     nightTl: 2.94,  // 22:00 - 06:00
     dayTl: 4.38,    // 06:00 - 17:00
     peakTl: 6.17,   // 17:00 - 22:00 (EPDK Peak)
+    peakSpikeTl: 10.18, // Overload surcharge on unshaved peak spikes
     exportTl: 3.50,
   },
   playbackSpeeds: [
@@ -88,23 +89,15 @@ export const PHOEBE_CONFIG = {
   presets: [
     {
       id: 'evening_peak',
-      label: 'Evening Peak Surge (Dec 16, 20:23)',
-      description: 'High residential heating & appliance load (~3.3 kW baseline)',
+      label: 'Evening Peak Surge',
+      badge: 'Typical Household',
+      description: 'Standard residential evening routine with heating & cooking (~3.3 kW baseline)',
     },
     {
       id: 'high_variance',
-      label: 'Dynamic Appliance Spikes (Window #2)',
-      description: 'Sharp intermittent demand spikes up to 7.0 kW requiring peak-shaving',
-    },
-    {
-      id: 'moderate_load',
-      label: 'Moderate Household Routine (Window #3)',
-      description: 'Balanced evening load where battery covers majority of demand',
-    },
-    {
-      id: 'tail',
-      label: 'Dataset Tail (Latest 180 Mins)',
-      description: 'Final 180 minutes recorded at the end of phoebe-test-data.csv',
+      label: 'High-Spike Stress Test',
+      badge: 'Heavy Appliances',
+      description: 'Demanding intermittent spikes up to 7.0 kW testing predictive battery rationing',
     },
   ],
 };

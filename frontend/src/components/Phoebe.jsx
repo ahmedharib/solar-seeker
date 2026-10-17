@@ -44,6 +44,7 @@ export default function Phoebe({ isTabActive = true }) {
   const [initialSocPercent, setInitialSocPercent] = useState(PHOEBE_CONFIG.initialSocPercent);
   const [maxOutputKw, setMaxOutputKw] = useState(PHOEBE_CONFIG.maxOutputKw);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const forecastHorizon = PHOEBE_CONFIG.forecastHorizonMinutes || 300;
 
   // Simulation Data & Loading State
   const [simulation, setSimulation] = useState(null);
@@ -84,6 +85,7 @@ export default function Phoebe({ isTabActive = true }) {
       formData.append('battery_capacity_kwh', batteryCapacityKwh.toString());
       formData.append('initial_soc_percent', initialSocPercent.toString());
       formData.append('max_output_kw', maxOutputKw.toString());
+      formData.append('forecast_horizon_minutes', forecastHorizon.toString());
 
       if (modeToUse === 'upload' && fileToUse) {
         formData.append('csv_file', fileToUse);
@@ -168,37 +170,54 @@ export default function Phoebe({ isTabActive = true }) {
   );
 
   const currentStep = timeline[currentStepIndex] || null;
-  const totalSteps = timeline.length || PHOEBE_CONFIG.forecastHorizonMinutes;
+  const totalSteps = timeline.length || forecastHorizon;
 
   const liveMetrics = useMemo(() => {
     if (!currentStep) {
       return {
         demandWithoutKw: 0,
+        gridNaiveKw: 0,
         gridWithKw: 0,
         batteryOutputKw: 0,
+        batteryOutputNaiveKw: 0,
         dischargeCapKw: 0,
         socPercent: initialSocPercent,
+        naiveSocPercent: initialSocPercent,
         remainingKwh: (batteryCapacityKwh * initialSocPercent) / 100,
+        naiveRemainingKwh: (batteryCapacityKwh * initialSocPercent) / 100,
         cumCostWithoutTl: 0,
+        cumCostNaiveTl: 0,
         cumCostWithTl: 0,
         cumSavingsTl: 0,
         savingsPercent: 0,
+        aiVsNaiveSavingsTl: 0,
+        aiVsNaivePercent: 0,
         cumDemandKwh: 0,
+        cumGridNaiveKwh: 0,
         cumGridWithKwh: 0,
         usageReductionPercent: 0,
         gridIndependenceScore: 0,
         minutesOffGrid: 0,
+        naiveDepletedTimestamp: null,
       };
     }
 
-    const cumCostWithoutTl = currentStep.cumulative_cost_without_model_tl;
-    const cumCostWithTl = currentStep.cumulative_cost_with_model_tl;
-    const cumSavingsTl = currentStep.cumulative_savings_tl;
+    const cumCostWithoutTl = currentStep.cumulative_cost_without_model_tl || 0;
+    const cumCostNaiveTl = currentStep.cumulative_cost_naive_tl || 0;
+    const cumCostWithTl = currentStep.cumulative_cost_with_model_tl || 0;
+    const cumSavingsTl = currentStep.cumulative_savings_tl || (cumCostWithoutTl - cumCostWithTl);
     const savingsPercent =
       cumCostWithoutTl > 0 ? Math.round((cumSavingsTl / cumCostWithoutTl) * 1000) / 10 : 0;
+    const aiVsNaiveSavingsTl =
+      currentStep.cumulative_ai_vs_naive_savings_tl !== undefined
+        ? currentStep.cumulative_ai_vs_naive_savings_tl
+        : cumCostNaiveTl - cumCostWithTl;
+    const aiVsNaivePercent =
+      cumCostNaiveTl > 0 ? Math.round((aiVsNaiveSavingsTl / cumCostNaiveTl) * 1000) / 10 : 0;
 
-    const cumDemandKwh = currentStep.cumulative_demand_kwh;
-    const cumGridWithKwh = currentStep.cumulative_grid_with_model_kwh;
+    const cumDemandKwh = currentStep.cumulative_demand_kwh || 0;
+    const cumGridNaiveKwh = currentStep.cumulative_grid_naive_kwh || 0;
+    const cumGridWithKwh = currentStep.cumulative_grid_with_model_kwh || 0;
     const usageReductionPercent =
       cumDemandKwh > 0
         ? Math.round(((cumDemandKwh - cumGridWithKwh) / cumDemandKwh) * 1000) / 10
@@ -209,23 +228,32 @@ export default function Phoebe({ isTabActive = true }) {
       Math.round((currentStep.minutes_off_grid_so_far / stepCount) * 1000) / 10;
 
     return {
-      demandWithoutKw: currentStep.demand_without_model_kw,
-      gridWithKw: currentStep.grid_draw_with_model_kw,
-      batteryOutputKw: currentStep.battery_output_kw,
-      dischargeCapKw: currentStep.discharge_cap_kw,
-      socPercent: currentStep.battery_soc_percent,
-      remainingKwh: currentStep.battery_remaining_kwh,
+      demandWithoutKw: currentStep.demand_without_model_kw || 0,
+      gridNaiveKw: currentStep.grid_draw_naive_kw || 0,
+      gridWithKw: currentStep.grid_draw_with_model_kw || 0,
+      batteryOutputKw: currentStep.battery_output_kw || 0,
+      batteryOutputNaiveKw: currentStep.battery_output_naive_kw || 0,
+      dischargeCapKw: currentStep.discharge_cap_kw || 0,
+      socPercent: currentStep.battery_soc_percent ?? initialSocPercent,
+      naiveSocPercent: currentStep.battery_soc_naive_percent ?? initialSocPercent,
+      remainingKwh: currentStep.battery_remaining_kwh ?? 0,
+      naiveRemainingKwh: currentStep.battery_remaining_naive_kwh ?? 0,
       cumCostWithoutTl,
+      cumCostNaiveTl,
       cumCostWithTl,
       cumSavingsTl,
       savingsPercent,
+      aiVsNaiveSavingsTl,
+      aiVsNaivePercent,
       cumDemandKwh,
+      cumGridNaiveKwh,
       cumGridWithKwh,
       usageReductionPercent,
       gridIndependenceScore,
-      minutesOffGrid: currentStep.minutes_off_grid_so_far,
+      minutesOffGrid: currentStep.minutes_off_grid_so_far || 0,
+      naiveDepletedTimestamp: simulation?.financials?.naive_depleted_timestamp || null,
     };
-  }, [currentStep, initialSocPercent, batteryCapacityKwh]);
+  }, [currentStep, initialSocPercent, batteryCapacityKwh, simulation]);
 
   // Visible action log entries up to the current timelapse step
   const visibleLogs = useMemo(() => {
@@ -244,6 +272,9 @@ export default function Phoebe({ isTabActive = true }) {
     }
     return logs;
   }, [simulation, visibleTimeline, currentStepIndex, totalSteps]);
+
+  const endTimestamp =
+    timeline.length > 0 ? timeline[timeline.length - 1].timestamp : '21:59';
 
   return (
     <div className="space-y-6">
@@ -270,7 +301,7 @@ export default function Phoebe({ isTabActive = true }) {
                 </h2>
               </div>
               <p className="text-xs text-zinc-400 mt-1.5">
-                RandomForest 120-minute rolling horizon forecaster & Model Predictive Control (MPC) battery dispatch.
+                RandomForest rolling horizon forecaster & Model Predictive Control (MPC) battery dispatch.
               </p>
             </div>
 
@@ -344,13 +375,15 @@ export default function Phoebe({ isTabActive = true }) {
                         <span className={`text-xs font-semibold leading-none ${active ? 'text-yellow-400' : 'text-zinc-200'}`}>
                           {preset.label}
                         </span>
-                        {active && (
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 leading-none">
-                            Selected
-                          </span>
-                        )}
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border leading-none ${
+                          active
+                            ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-800'
+                        }`}>
+                          {preset.badge || (active ? 'Selected' : 'Household')}
+                        </span>
                       </div>
-                      <p className="text-[11px] text-zinc-500 mt-1.5 line-clamp-1">
+                      <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
                         {preset.description}
                       </p>
                     </button>
@@ -398,7 +431,7 @@ export default function Phoebe({ isTabActive = true }) {
                     Drop your household consumption <span className="text-yellow-400 font-mono">.csv</span> here, or click to browse
                   </p>
                   <p className="text-[11px] text-zinc-500">
-                    Reads the last 180 minutes of power demand (kW) from column 0 to forecast the next 120 minutes
+                    Reads the last 180 minutes of power demand (kW) from column 0 to forecast the peak window
                   </p>
                 </div>
               )}
@@ -423,14 +456,14 @@ export default function Phoebe({ isTabActive = true }) {
             </button>
           </div>
 
-          {/* 3-Tier EPDK Rate Pills */}
+          {/* 3-Tier EPDK Rate Pills (Unified clean styling) */}
           <div className="grid grid-cols-3 gap-2.5">
             <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
               <div className="text-[10px] text-zinc-500 font-mono leading-none">Night (22–06)</div>
               <div className="text-sm font-bold text-zinc-200 font-mono mt-1">
                 {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.nightTl}
               </div>
-              <div className="text-[10px] text-emerald-400 mt-0.5 leading-none">Grid Charge</div>
+              <div className="text-[10px] text-zinc-400 mt-0.5 leading-none">Off-Peak Charge</div>
             </div>
 
             <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
@@ -438,15 +471,15 @@ export default function Phoebe({ isTabActive = true }) {
               <div className="text-sm font-bold text-zinc-200 font-mono mt-1">
                 {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.dayTl}
               </div>
-              <div className="text-[10px] text-zinc-400 mt-0.5 leading-none">BESS Lockout</div>
+              <div className="text-[10px] text-zinc-400 mt-0.5 leading-none">Standard Tariff</div>
             </div>
 
-            <div className="p-3 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
-              <div className="text-[10px] text-yellow-300/80 font-mono leading-none">Peak (17–22)</div>
-              <div className="text-sm font-bold text-yellow-400 font-mono mt-1">
+            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
+              <div className="text-[10px] text-zinc-500 font-mono leading-none">Peak (17–22)</div>
+              <div className="text-sm font-bold text-zinc-200 font-mono mt-1">
                 {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}
               </div>
-              <div className="text-[10px] text-yellow-300 mt-0.5 leading-none">AI Rationing</div>
+              <div className="text-[10px] text-zinc-400 mt-0.5 leading-none">AI Peak Window</div>
             </div>
           </div>
 
@@ -498,6 +531,17 @@ export default function Phoebe({ isTabActive = true }) {
             </div>
           )}
 
+          {/* Active EPDK Peak Window Badge */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80 text-xs">
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+              <span className="text-zinc-300 font-medium">EPDK Peak Window</span>
+            </div>
+            <span className="font-mono text-zinc-400 text-[11px]">
+              17:00 – 22:00 (5 Hours)
+            </span>
+          </div>
+
           {/* Primary Run / Re-run Simulation Button */}
           <button
             type="button"
@@ -517,12 +561,12 @@ export default function Phoebe({ isTabActive = true }) {
             ) : !simulation ? (
               <>
                 <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 ml-0.5" />
-                <span className="leading-none">Run 120-Minute Peak Simulation</span>
+                <span className="leading-none">Run 5-Hour Peak Simulation</span>
               </>
             ) : (
               <>
                 <RotateCcw className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
-                <span className="leading-none">Re-run Simulation</span>
+                <span className="leading-none">Re-run 5-Hour Simulation</span>
               </>
             )}
           </button>
@@ -540,7 +584,7 @@ export default function Phoebe({ isTabActive = true }) {
               Ready to Forecast & Optimize Battery Dispatch
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Phoebe uses an AI RandomForest model trained on historical load data to forecast 120 minutes of power demand during the EPDK peak window (17:00–22:00 at {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}/kWh). Model Predictive Control (MPC) schedules battery discharge to shave costly spikes and lower your electricity bill.
+              Phoebe uses an AI RandomForest model trained on historical load data to forecast 5 hours of power demand during the EPDK peak window (17:00–22:00 at {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}/kWh). Model Predictive Control (MPC) schedules battery discharge to shave costly spikes, outperforming naive batteries and lowering your electricity bill.
             </p>
           </div>
           <div className="pt-2">
@@ -558,15 +602,15 @@ export default function Phoebe({ isTabActive = true }) {
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-zinc-950 ml-0.5" />
-                  <span>Run 120-Minute Peak Simulation</span>
+                  <span>Run 5-Hour Peak Simulation</span>
                 </>
               )}
             </button>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 text-[11px] text-zinc-500 pt-2 font-mono">
-            <span>✓ EPDK 3-tier peak shaving</span>
+            <span>✓ 3-Way Benchmark Comparison</span>
+            <span>✓ EPDK 5-Hour Evening Peak (17:00–22:00)</span>
             <span>✓ 180-min rolling history</span>
-            <span>✓ Zero rooftop vision interference</span>
           </div>
         </div>
       )}
@@ -641,7 +685,7 @@ export default function Phoebe({ isTabActive = true }) {
                   setCurrentStepIndex(totalSteps - 1);
                 }}
                 className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
-                title="Skip to End (18:59)"
+                title={`Skip to End (${endTimestamp})`}
               >
                 <FastForward className="w-3.5 h-3.5" />
               </button>
@@ -693,7 +737,7 @@ export default function Phoebe({ isTabActive = true }) {
                 }}
                 className="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
               />
-              <span className="text-[11px] font-mono text-zinc-500">18:59</span>
+              <span className="text-[11px] font-mono text-zinc-500">{endTimestamp}</span>
             </div>
 
             {/* Speed Selector */}
@@ -716,96 +760,226 @@ export default function Phoebe({ isTabActive = true }) {
             </div>
           </div>
 
-          {/* 4 Live KPI Cards */}
+          {/* 3-Way Benchmark Executive Comparison Scoreboard */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Arm 1: Grid-Only (No Battery) */}
+            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/90 relative overflow-hidden flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="inline-flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Grid-Only</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
+                    No Battery (Baseline)
+                  </span>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-mono leading-none">Cumulative Peak Bill</div>
+                  <div className="text-2xl font-extrabold text-white font-mono mt-1 leading-tight">
+                    {CURRENCY.symbol}{liveMetrics.cumCostWithoutTl.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div>
+                    <span className="text-zinc-500 block text-[10px] leading-none mb-1">Grid Import</span>
+                    <span className="text-zinc-300 font-semibold">{liveMetrics.cumDemandKwh} kWh</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block text-[10px] leading-none mb-1">Peak Exposure</span>
+                    <span className="text-rose-400 font-semibold">100% Utility</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-500 leading-snug">
+                  Unmitigated peak grid draw at {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}/kWh + progressive overload surcharge.
+                </p>
+              </div>
+            </div>
+
+            {/* Arm 2: Naive / Standard Battery */}
+            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/90 relative overflow-hidden flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="inline-flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Naive Battery</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none">
+                    Standard BESS (No AI)
+                  </span>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-mono leading-none">Cumulative Peak Bill</div>
+                  <div className="text-2xl font-extrabold text-amber-400 font-mono mt-1 leading-tight">
+                    {CURRENCY.symbol}{liveMetrics.cumCostNaiveTl.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div>
+                    <span className="text-zinc-500 block text-[10px] leading-none mb-1">Grid Import</span>
+                    <span className="text-zinc-300 font-semibold">{liveMetrics.cumGridNaiveKwh} kWh</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block text-[10px] leading-none mb-1">Battery State</span>
+                    <span className={liveMetrics.naiveSocPercent <= 0.1 ? 'text-amber-400 font-bold' : 'text-zinc-300 font-semibold'}>
+                      {liveMetrics.naiveSocPercent}% SoC
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-snug">
+                  {liveMetrics.naiveSocPercent <= 0.1 ? (
+                    <span className="text-amber-400 font-medium">
+                      ⚠️ Depleted at {liveMetrics.naiveDepletedTimestamp || '18:38'} (0% SoC). Exhausted early, leaving late peaks exposed.
+                    </span>
+                  ) : (
+                    <span>Greedy unmanaged dispatch discharges at full power on early base loads.</span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Arm 3: Phoebe AI */}
+            <div className="p-5 rounded-2xl bg-gradient-to-b from-yellow-400/5 via-zinc-900/50 to-zinc-900/40 border border-yellow-400/30 relative overflow-hidden flex flex-col justify-between space-y-4 shadow-sm shadow-yellow-400/5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="inline-flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Phoebe AI</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold leading-none">
+                    AI + MPC Dispatch
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <div className="text-[10px] text-zinc-500 font-mono leading-none">Cumulative Peak Bill</div>
+                    <div className="text-2xl font-extrabold text-emerald-400 font-mono mt-1 leading-tight">
+                      {CURRENCY.symbol}{liveMetrics.cumCostWithTl.toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] text-zinc-500 font-mono leading-none">Extra vs Naive</div>
+                    <div className="text-sm font-bold text-yellow-400 font-mono mt-1 leading-tight">
+                      +{CURRENCY.symbol}{liveMetrics.aiVsNaiveSavingsTl.toFixed(2)} (+{liveMetrics.aiVsNaivePercent}%)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div>
+                    <span className="text-zinc-500 block text-[10px] leading-none mb-1">Grid Import</span>
+                    <span className="text-emerald-400 font-semibold">{liveMetrics.cumGridWithKwh} kWh</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block text-[10px] leading-none mb-1">Battery State</span>
+                    <span className="text-emerald-400 font-semibold">{liveMetrics.socPercent}% SoC ({liveMetrics.remainingKwh} kWh)</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-300 leading-snug">
+                  RandomForest rolling forecaster + dynamic MPC spike rationing preserves battery across all {forecastHorizon / 60} hours.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Live Telemetry KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Grid Usage Reduction */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="leading-none">Grid Usage Shaved</span>
-            <TrendingDown className="w-4 h-4 text-yellow-400 shrink-0" />
-          </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight font-mono">
-            {liveMetrics.usageReductionPercent}%
-          </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1 font-mono">
-            No AI: <strong className="text-rose-400">{liveMetrics.cumDemandKwh} kWh</strong> · AI:{' '}
-            <strong className="text-emerald-400">{liveMetrics.cumGridWithKwh} kWh</strong>
-          </p>
-        </div>
+            {/* Card 1: Grid Usage Reduction */}
+            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400">
+                <span className="leading-none">Grid Usage Shaved</span>
+                <TrendingDown className="w-4 h-4 text-yellow-400 shrink-0" />
+              </div>
+              <div className="text-2xl font-extrabold text-yellow-400 tracking-tight font-mono">
+                {liveMetrics.usageReductionPercent}%
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-tight font-mono">
+                {(liveMetrics.cumDemandKwh - liveMetrics.cumGridWithKwh).toFixed(2)} kWh demand shifted to battery
+              </p>
+            </div>
 
-        {/* Card 2: Peak Cost Comparison (TL) */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="leading-none">Net Peak Savings ({CURRENCY.symbol})</span>
-            <span className="text-yellow-400 font-mono text-[11px] font-semibold leading-none">
-              -{liveMetrics.savingsPercent}% Bill
-            </span>
-          </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight font-mono">
-            {CURRENCY.symbol}{liveMetrics.cumSavingsTl.toFixed(2)}
-          </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1 font-mono">
-            No AI: <strong className="text-rose-400">{CURRENCY.symbol}{liveMetrics.cumCostWithoutTl.toFixed(2)}</strong> · AI:{' '}
-            <strong className="text-emerald-400">{CURRENCY.symbol}{liveMetrics.cumCostWithTl.toFixed(2)}</strong>
-          </p>
-        </div>
+            {/* Card 2: Peak Cost Savings vs Grid */}
+            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400">
+                <span className="leading-none">Net Peak Savings</span>
+                <span className="text-yellow-400 font-mono text-[11px] font-semibold leading-none">
+                  -{liveMetrics.savingsPercent}% Bill
+                </span>
+              </div>
+              <div className="text-2xl font-extrabold text-yellow-400 tracking-tight font-mono">
+                {CURRENCY.symbol}{liveMetrics.cumSavingsTl.toFixed(2)}
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-tight font-mono">
+                Total reduction vs. Grid-Only baseline
+              </p>
+            </div>
 
-        {/* Card 3: Live Battery SoC & MPC Cap */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="leading-none">Battery State (SoC)</span>
-            <BatteryCharging className="w-4 h-4 text-yellow-400 shrink-0" />
-          </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight font-mono">
-            {liveMetrics.socPercent}%{' '}
-            <span className="text-sm font-normal text-yellow-400/70">
-              ({liveMetrics.remainingKwh} kWh)
-            </span>
-          </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1 font-mono">
-            MPC Cap: <strong className="text-zinc-200">{liveMetrics.dischargeCapKw} kW</strong> · Out:{' '}
-            <strong className="text-yellow-400">{liveMetrics.batteryOutputKw} kW</strong>
-          </p>
-        </div>
+            {/* Card 3: Phoebe Battery State (SoC) */}
+            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400">
+                <span className="leading-none">Phoebe Battery (SoC)</span>
+                <BatteryCharging className="w-4 h-4 text-yellow-400 shrink-0" />
+              </div>
+              <div className="text-2xl font-extrabold text-yellow-400 tracking-tight font-mono">
+                {liveMetrics.socPercent}%{' '}
+                <span className="text-xs font-normal text-yellow-400/70 font-mono">
+                  ({liveMetrics.remainingKwh} kWh)
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-tight font-mono">
+                MPC Cap: <strong className="text-zinc-200">{liveMetrics.dischargeCapKw} kW</strong> · Out: <strong className="text-yellow-400">{liveMetrics.batteryOutputKw} kW</strong>
+              </p>
+            </div>
 
-        {/* Card 4: Grid Independence Score */}
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="leading-none">Grid Independence</span>
-            <ShieldCheck className="w-4 h-4 text-yellow-400 shrink-0" />
+            {/* Card 4: Grid Independence Score */}
+            <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400">
+                <span className="leading-none">Grid Independence</span>
+                <ShieldCheck className="w-4 h-4 text-yellow-400 shrink-0" />
+              </div>
+              <div className="text-2xl font-extrabold text-yellow-400 tracking-tight font-mono">
+                {liveMetrics.gridIndependenceScore}%
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-tight font-mono">
+                <strong className="text-zinc-300">{liveMetrics.minutesOffGrid}</strong> of {currentStepIndex + 1} mins 100% off-grid
+              </p>
+            </div>
           </div>
-          <div className="text-3xl font-extrabold text-yellow-400 tracking-tight font-mono">
-            {liveMetrics.gridIndependenceScore}%
-          </div>
-          <p className="text-[11px] text-zinc-500 leading-none mt-1 font-mono">
-            <strong className="text-zinc-300">{liveMetrics.minutesOffGrid}</strong> of {currentStepIndex + 1} mins 100% off-grid
-          </p>
-        </div>
-      </div>
 
       {/* Dual Comparison Graphs: Usage (Left) & Cost (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Graph: Power Usage Comparison (With vs. Without Model) */}
+        {/* Left Graph: Power Usage Comparison (3-Way Benchmark) */}
         <div className="lg:col-span-6 p-6 sm:p-7 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
                 <Activity className="w-4 h-4 text-yellow-400 shrink-0 -translate-y-px" />
-                <span className="leading-none">Grid Power Usage: Without vs. With Phoebe (kW)</span>
+                <span className="leading-none">Grid Power Usage: 3-Way Benchmark (kW)</span>
               </h3>
               <p className="text-xs text-zinc-400 mt-1.5">
-                Real-time household demand vs. net grid draw after MPC battery peak-shaving.
+                Grid-Only demand vs. Naive greedy battery vs. Phoebe AI MPC peak-shaving.
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
-                Without Model
+                Grid-Only
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none">
+                Naive Battery
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
-                With Phoebe
+                Phoebe AI
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 leading-none">
-                BESS Output
+                BESS Out
               </span>
             </div>
           </div>
@@ -815,8 +989,8 @@ export default function Phoebe({ isTabActive = true }) {
               <AreaChart data={visibleTimeline} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                 <defs>
                   <linearGradient id="usageWithoutGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.35} />
-                    <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.02} />
+                    <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.01} />
                   </linearGradient>
                   <linearGradient id="usageWithGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={THEME_COLORS.charts.withModelUsage} stopOpacity={0.4} />
@@ -845,13 +1019,16 @@ export default function Phoebe({ isTabActive = true }) {
                         >
                           <p className="font-semibold text-white leading-none">Time: {d.timestamp}</p>
                           <p className="text-rose-400">
-                            Without Model (Grid): <strong>{d.demand_without_model_kw} kW</strong>
+                            Grid-Only Demand: <strong>{d.demand_without_model_kw} kW</strong>
+                          </p>
+                          <p className="text-amber-400">
+                            Naive Battery Grid: <strong>{d.grid_draw_naive_kw} kW</strong> (SoC: {d.battery_soc_naive_percent}%)
                           </p>
                           <p className="text-emerald-400">
-                            With Phoebe (Grid): <strong>{d.grid_draw_with_model_kw} kW</strong>
+                            Phoebe AI Grid: <strong>{d.grid_draw_with_model_kw} kW</strong> (SoC: {d.battery_soc_percent}%)
                           </p>
                           <p className="text-yellow-400">
-                            Battery Supplied: <strong>{d.battery_output_kw} kW</strong> (Cap: {d.discharge_cap_kw} kW)
+                            Phoebe BESS Output: <strong>{d.battery_output_kw} kW</strong> (Cap: {d.discharge_cap_kw} kW)
                           </p>
                         </div>
                       );
@@ -863,8 +1040,17 @@ export default function Phoebe({ isTabActive = true }) {
                   type="monotone"
                   dataKey="demand_without_model_kw"
                   stroke={THEME_COLORS.charts.withoutModelUsage}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   fill="url(#usageWithoutGrad)"
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="grid_draw_naive_kw"
+                  stroke={THEME_COLORS.charts.naiveBatteryUsage}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  fill="none"
                   isAnimationActive={false}
                 />
                 <Area
@@ -880,7 +1066,7 @@ export default function Phoebe({ isTabActive = true }) {
                   dataKey="battery_output_kw"
                   stroke={THEME_COLORS.charts.batteryDischarge}
                   strokeWidth={1.5}
-                  strokeDasharray="4 4"
+                  strokeDasharray="2 2"
                   fill="none"
                   isAnimationActive={false}
                 />
@@ -889,26 +1075,29 @@ export default function Phoebe({ isTabActive = true }) {
           </div>
         </div>
 
-        {/* Right Graph: Cumulative Cost Comparison (With vs. Without Model in TL) */}
+        {/* Right Graph: Cumulative Cost Comparison (3-Way Benchmark in TL) */}
         <div className="lg:col-span-6 p-6 sm:p-7 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
                 <Zap className="w-4 h-4 text-yellow-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">
-                  Cumulative Peak Cost: Without vs. With Phoebe ({CURRENCY.symbol})
+                  Cumulative Peak Cost: 3-Way Benchmark ({CURRENCY.symbol})
                 </span>
               </h3>
               <p className="text-xs text-zinc-400 mt-1.5">
                 Running electricity bill during the {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}/kWh evening peak window.
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
-                No AI Cost ({CURRENCY.symbol})
+                Grid-Only ({CURRENCY.symbol})
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none">
+                Naive BESS ({CURRENCY.symbol})
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
-                Phoebe AI Cost ({CURRENCY.symbol})
+                Phoebe AI ({CURRENCY.symbol})
               </span>
             </div>
           </div>
@@ -918,8 +1107,8 @@ export default function Phoebe({ isTabActive = true }) {
               <AreaChart data={visibleTimeline} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
                 <defs>
                   <linearGradient id="costWithoutGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.35} />
-                    <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.03} />
+                    <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.02} />
                   </linearGradient>
                   <linearGradient id="costWithGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={THEME_COLORS.charts.withModelCost} stopOpacity={0.45} />
@@ -948,14 +1137,22 @@ export default function Phoebe({ isTabActive = true }) {
                         >
                           <p className="font-semibold text-white leading-none">Time: {d.timestamp}</p>
                           <p className="text-rose-400">
-                            Cost Without Model: <strong>{CURRENCY.symbol}{d.cumulative_cost_without_model_tl?.toFixed(2)}</strong>
+                            Grid-Only Cost: <strong>{CURRENCY.symbol}{d.cumulative_cost_without_model_tl?.toFixed(2)}</strong>
+                          </p>
+                          <p className="text-amber-400">
+                            Naive Battery Cost: <strong>{CURRENCY.symbol}{d.cumulative_cost_naive_tl?.toFixed(2)}</strong>
                           </p>
                           <p className="text-emerald-400">
-                            Cost With Phoebe AI: <strong>{CURRENCY.symbol}{d.cumulative_cost_with_model_tl?.toFixed(2)}</strong>
+                            Phoebe AI Cost: <strong>{CURRENCY.symbol}{d.cumulative_cost_with_model_tl?.toFixed(2)}</strong>
                           </p>
-                          <p className="text-yellow-400 font-bold">
-                            Net Saved: +{CURRENCY.symbol}{d.cumulative_savings_tl?.toFixed(2)}
-                          </p>
+                          <div className="pt-1 border-t border-zinc-800 space-y-0.5">
+                            <p className="text-yellow-400 font-bold">
+                              Saved vs Grid: +{CURRENCY.symbol}{d.cumulative_savings_tl?.toFixed(2)}
+                            </p>
+                            <p className="text-amber-400 font-bold">
+                              Extra vs Naive: +{CURRENCY.symbol}{d.cumulative_ai_vs_naive_savings_tl?.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       );
                     }
@@ -966,8 +1163,17 @@ export default function Phoebe({ isTabActive = true }) {
                   type="monotone"
                   dataKey="cumulative_cost_without_model_tl"
                   stroke={THEME_COLORS.charts.withoutModelCost}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   fill="url(#costWithoutGrad)"
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cumulative_cost_naive_tl"
+                  stroke={THEME_COLORS.charts.naiveBatteryCost}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  fill="none"
                   isAnimationActive={false}
                 />
                 <Area
@@ -1017,13 +1223,15 @@ export default function Phoebe({ isTabActive = true }) {
         <div className="lg:col-span-5 p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
           <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
             <Database className="w-4 h-4 text-yellow-400 shrink-0 -translate-y-px" />
-            <span className="leading-none">Model & Input Telemetry Summary</span>
+            <span className="leading-none">Model & 3-Way Benchmark Summary</span>
           </h3>
 
           <div className="space-y-2.5 text-xs divide-y divide-zinc-800/80">
             <div className="flex justify-between pt-1">
               <span className="text-zinc-400">Forecaster Architecture:</span>
-              <span className="text-zinc-200 font-mono">RandomForest (120-Step Rolling)</span>
+              <span className="text-zinc-200 font-mono">
+                RandomForest (5-Hour Rolling Forecaster)
+              </span>
             </div>
             <div className="flex justify-between pt-2.5">
               <span className="text-zinc-400">Historical Lookback Window:</span>
@@ -1032,24 +1240,23 @@ export default function Phoebe({ isTabActive = true }) {
               </span>
             </div>
             <div className="flex justify-between pt-2.5">
-              <span className="text-zinc-400">Historical Peak / Min Demand:</span>
-              <span className="text-zinc-200 font-mono">
-                {simulation?.past_180_summary?.max_kw || 0} kW / {simulation?.past_180_summary?.min_kw || 0} kW
+              <span className="text-zinc-400">Naive Battery Depletion:</span>
+              <span className="text-amber-400 font-mono font-semibold">
+                {simulation?.financials?.naive_depleted_timestamp
+                  ? `${simulation.financials.naive_depleted_timestamp} (Runs Dry Early)`
+                  : 'Sustained full horizon'}
               </span>
             </div>
             <div className="flex justify-between pt-2.5">
-              <span className="text-zinc-400">MPC Dispatch Strategy:</span>
-              <span className="text-yellow-400 font-mono font-semibold">
-                {simulation?.battery_config?.rationing_mode
-                  ? 'Dynamic Median Spike Rationing'
-                  : 'Full Peak Coverage'}
+              <span className="text-zinc-400">Extra AI vs. Naive Savings:</span>
+              <span className="text-amber-400 font-mono font-bold">
+                +{CURRENCY.symbol}{simulation?.financials?.ai_vs_naive_savings_tl?.toFixed(2) || '0.00'} (+{simulation?.financials?.ai_vs_naive_percent || 0}%)
               </span>
             </div>
             <div className="flex justify-between pt-2.5">
-              <span className="text-zinc-400">2-Hour Projected Peak Savings:</span>
+              <span className="text-zinc-400">Total Savings vs. Grid-Only:</span>
               <span className="text-emerald-400 font-mono font-bold">
-                +{CURRENCY.symbol}{simulation?.financials?.total_savings_tl?.toFixed(2) || '0.00'} (
-                {simulation?.financials?.savings_percent || 0}%)
+                +{CURRENCY.symbol}{simulation?.financials?.total_savings_tl?.toFixed(2) || '0.00'} ({simulation?.financials?.savings_percent || 0}%)
               </span>
             </div>
           </div>

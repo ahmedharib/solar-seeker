@@ -375,11 +375,12 @@ async def simulate_phoebe(
     battery_capacity_kwh: float = Form(DEFAULT_BATTERY_CAPACITY_KWH),
     initial_soc_percent: float = Form(DEFAULT_INITIAL_SOC_PERCENT),
     max_output_kw: float = Form(DEFAULT_MAX_OUTPUT_KW),
+    forecast_horizon_minutes: int = Form(300),
     csv_file: Optional[UploadFile] = File(None),
 ):
     """
-    Phoebe HEMS 120-Minute Rolling Horizon Forecast & MPC Battery Dispatch Simulation.
-    Supports either the built-in data/phoebe-test-data.csv or a custom uploaded CSV file.
+    Phoebe HEMS Rolling Horizon Forecast & 3-Way Benchmark MPC Simulation.
+    Supports 120, 180, and 300-minute prediction horizons.
     """
     try:
         if csv_file is not None and not use_sample:
@@ -396,6 +397,7 @@ async def simulate_phoebe(
             battery_capacity_kwh=battery_capacity_kwh,
             initial_soc_percent=initial_soc_percent,
             max_output_kw=max_output_kw,
+            forecast_horizon_minutes=forecast_horizon_minutes,
         )
         return result
 
