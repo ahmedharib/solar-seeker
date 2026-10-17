@@ -223,15 +223,18 @@ export default function Step1Upload({
     }
   };
 
+  const isCalibratedSelected =
+    Math.abs(location.lat - CALIBRATED_SITE.lat) < 0.001 &&
+    Math.abs(location.lon - CALIBRATED_SITE.lon) < 0.001;
 
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-200 flex items-start gap-3">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5 -translate-y-px" />
+        <div className="p-4 rounded-xl ss-badge-danger flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 -translate-y-px" />
           <div className="text-xs">
-            <p className="font-semibold text-rose-100 leading-none">Detection Error</p>
-            <p className="text-rose-200/90 text-[11px] mt-1">{error}</p>
+            <p className="font-bold leading-none">Detection Error</p>
+            <p className="opacity-90 text-[11px] mt-1">{error}</p>
           </div>
         </div>
       )}
@@ -239,43 +242,43 @@ export default function Step1Upload({
       {/* Main Two-Column Grid: Symmetrical Equal Heights */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Column: Rooftop Imagery Source (Upload OR Location Search) */}
-        <div className="lg:col-span-7 flex flex-col justify-between p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
+        <div className="lg:col-span-7 flex flex-col justify-between p-6 rounded-2xl ss-card space-y-4">
           {/* Top Bar with Title & Dual Mode Switcher */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
-              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight leading-none">
+              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight leading-none">
                 Rooftop Imagery Source
               </h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                Provide aerial imagery via file upload or location lookup.
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                Provide aerial imagery via file upload or satellite coordinate lookup.
               </p>
             </div>
 
             {/* Mode Switcher Pill */}
-            <div className="inline-flex p-1 bg-zinc-900 border border-zinc-800 rounded-xl self-start sm:self-auto shrink-0 shadow-inner">
+            <div className="inline-flex p-1 ss-pill-track rounded-xl self-start sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setSourceMode('upload')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   sourceMode === 'upload'
-                    ? 'bg-zinc-800 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'ss-pill-active'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
                 }`}
               >
-                <UploadCloud className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
+                <UploadCloud className="w-3.5 h-3.5 text-[#37645C] dark:text-[#F5AD46] shrink-0 -translate-y-px" />
                 <span className="leading-none">Upload Screenshot</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSourceMode('location')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   sourceMode === 'location'
-                    ? 'bg-zinc-800 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'ss-pill-active'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
+                <MapPin className="w-3.5 h-3.5 text-[#37645C] dark:text-[#F5AD46] shrink-0 -translate-y-px" />
                 <span className="leading-none">Location Search</span>
               </button>
             </div>
@@ -284,16 +287,20 @@ export default function Step1Upload({
           {/* MODE 1: FILE UPLOAD DROPZONE */}
           {sourceMode === 'upload' && (
             <div className="flex-1 flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-zinc-400">
-                <span className="leading-none">Top-down aerial screenshot (Google Maps, Apple Maps, or Earth).</span>
+              <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
+                <span className="leading-none">
+                  Top-down aerial screenshot (Google Maps, Apple Maps, or Earth).
+                </span>
                 <button
                   type="button"
                   onClick={loadSampleImage}
                   disabled={loadingSample || isDetecting}
-                  className="px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 inline-flex items-center gap-1.5 font-medium transition-colors shrink-0 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full ss-btn-secondary inline-flex items-center gap-1.5 font-semibold shrink-0 cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
-                  <span className="leading-none">{loadingSample ? 'Loading...' : 'Use Sample Image'}</span>
+                  <span className="w-2 h-2 rounded-full bg-[#F5AD46] shrink-0" />
+                  <span className="leading-none">
+                    {loadingSample ? 'Loading...' : 'Use Sample Image'}
+                  </span>
                 </button>
               </div>
 
@@ -304,12 +311,12 @@ export default function Step1Upload({
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex-1 min-h-[440px] rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden ${
+                className={`flex-1 min-h-[440px] rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center overflow-hidden ${
                   dragActive
-                    ? 'border-zinc-400 bg-zinc-900/60'
+                    ? 'border-[#37645C] bg-[var(--brand-field-subtle)]'
                     : previewUrl
-                    ? 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700'
-                    : 'border-zinc-800/80 bg-zinc-900/20 hover:border-zinc-700 hover:bg-zinc-900/40'
+                    ? 'border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:border-[var(--border-strong)]'
+                    : 'border-[var(--border-strong)] bg-[var(--bg-subtle)]/60 hover:border-[#37645C] hover:bg-[var(--bg-subtle)]'
                 }`}
               >
                 <input
@@ -322,36 +329,36 @@ export default function Step1Upload({
 
                 {previewUrl ? (
                   <div className="w-full h-full flex flex-col items-center justify-center space-y-4">
-                    <div className="relative w-full flex-1 max-h-[400px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                    <div className="relative w-full flex-1 max-h-[400px] rounded-xl overflow-hidden border border-[var(--border-subtle)] bg-[#182321] flex items-center justify-center">
                       <img
                         src={previewUrl}
                         alt="Satellite Preview"
                         className="w-full h-full object-contain max-h-[400px] mx-auto"
                       />
-                      <div className="absolute bottom-3 right-3 px-3 py-1 bg-zinc-950/90 border border-zinc-800 rounded-lg text-xs text-zinc-300 font-mono shadow-md">
-                        {file?.name || 'satellite_image.png'} •{' '}
+                      <div className="absolute bottom-3 right-3 px-3 py-1 bg-[#182321]/90 border border-[#F6F5EF]/15 rounded-lg text-xs text-[#F6F5EF] tabular-nums shadow-md">
+                        {file?.name || 'satellite_image.png'} ·{' '}
                         {file?.size ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : 'Loaded'}
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-400 font-medium leading-none">
+                    <p className="text-xs text-[var(--text-secondary)] font-medium leading-none">
                       Click or drag a new screenshot anywhere to replace
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4 max-w-sm py-6">
-                    <div className="w-12 h-12 mx-auto rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
-                      <UploadCloud className="w-6 h-6 text-zinc-200" />
+                    <div className="w-12 h-12 mx-auto rounded-2xl bg-[#182321] text-[#F5AD46] flex items-center justify-center shadow-sm">
+                      <UploadCloud className="w-6 h-6" />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-zinc-200 leading-none">
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-bold text-[var(--text-primary)] leading-none">
                         Drop high-res aerial screenshot here, or browse
                       </p>
-                      <p className="text-xs text-zinc-500 mt-1">
+                      <p className="text-xs text-[var(--text-muted)]">
                         Supports PNG, JPG, WEBP captures up to 15 MB
                       </p>
                     </div>
                     <div className="pt-2">
-                      <span className="inline-block px-5 py-2 rounded-full bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200 transition-colors shadow-sm leading-none">
+                      <span className="inline-block px-5 py-2.5 rounded-full bg-[#F5AD46] text-[#182321] text-xs font-bold hover:bg-[#E59A2E] transition-colors shadow-xs leading-none">
                         Browse Files
                       </span>
                     </div>
@@ -367,21 +374,21 @@ export default function Step1Upload({
               {/* Address Search Bar */}
               <div className="relative w-full">
                 <form onSubmit={handleAddressSubmit} className="relative w-full">
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchAddress}
                     onChange={handleAddressChange}
                     placeholder="Search street address, district, city, or coordinates (e.g. Beylikdüzü, 41.0026, 28.6417)..."
-                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl pl-10 pr-24 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none transition-colors font-sans"
+                    className="w-full ss-input rounded-xl pl-10 pr-24 py-2.5 text-xs placeholder-[var(--text-muted)]"
                   />
                   <button
                     type="submit"
                     disabled={isLocating}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#182321] text-[#F6F5EF] dark:bg-[#F5AD46] dark:text-[#182321] text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     {isLocating ? (
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                      <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
                     ) : (
                       <span className="leading-none">Locate</span>
                     )}
@@ -390,16 +397,16 @@ export default function Step1Upload({
 
                 {/* Optional Geocoding Disambiguation Dropdown */}
                 {searchSuggestions.length > 1 && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-zinc-950 border border-zinc-800 rounded-xl shadow-xl overflow-hidden divide-y divide-zinc-800/80">
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-30 ss-card rounded-xl shadow-xl overflow-hidden divide-y divide-[var(--border-subtle)]">
                     {searchSuggestions.map((item, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => applyTargetLocation(item.lat, item.lon, item.display_name)}
-                        className="w-full text-left px-3.5 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors flex items-center justify-between gap-2 cursor-pointer"
                       >
-                        <span className="truncate">{item.display_name}</span>
-                        <span className="text-[10px] font-mono text-yellow-400 shrink-0">
+                        <span className="truncate font-medium">{item.display_name}</span>
+                        <span className="text-[11px] tabular-nums font-bold text-[#37645C] dark:text-[#F5AD46] shrink-0">
                           {item.lat.toFixed(4)}, {item.lon.toFixed(4)}
                         </span>
                       </button>
@@ -409,9 +416,9 @@ export default function Step1Upload({
               </div>
 
               {locationError && (
-                <div className="px-3.5 py-2 rounded-xl bg-amber-950/60 border border-amber-800/70 text-amber-200 text-[11px] flex items-center gap-2">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
-                  <span className="leading-none">{locationError}</span>
+                <div className="px-3.5 py-2.5 rounded-xl ss-badge-solar text-[11px] flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
+                  <span className="leading-none font-medium">{locationError}</span>
                 </div>
               )}
 
@@ -435,18 +442,20 @@ export default function Step1Upload({
         {/* Right Column: Symmetrical Stacking with Fixed Heights & Zero Layout Shift */}
         <div className="lg:col-span-5 flex flex-col justify-between gap-6">
           {/* Geographical Coordinates Section */}
-          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
+          <div className="p-6 rounded-2xl ss-card space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-amber-400 shrink-0 -translate-y-px" />
+                <h3 className="text-sm font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg ss-icon-solar inline-flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </span>
                   <span className="leading-none">Geographical Coordinates</span>
                 </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 leading-none">
+                <span className="text-[10px] font-bold tabular-nums px-2.5 py-1 rounded-full ss-well text-[var(--text-secondary)] leading-none">
                   PVGIS 5.3
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
                 Required to query European Commission solar radiation databases.
               </p>
             </div>
@@ -459,19 +468,17 @@ export default function Step1Upload({
                   applyTargetLocation(CALIBRATED_SITE.lat, CALIBRATED_SITE.lon, CALIBRATED_SITE.name)
                 }
                 className={`text-xs px-3.5 py-1.5 rounded-full border transition-all inline-flex items-center gap-2 cursor-pointer ${
-                  Math.abs(location.lat - CALIBRATED_SITE.lat) < 0.001 &&
-                  Math.abs(location.lon - CALIBRATED_SITE.lon) < 0.001
-                    ? 'bg-zinc-100 text-zinc-950 font-semibold border-zinc-100 shadow-sm'
-                    : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                  isCalibratedSelected
+                    ? 'bg-[#182321] text-[#F6F5EF] border-[#182321] dark:bg-[#F6F5EF] dark:text-[#182321] dark:border-[#F6F5EF] font-bold shadow-xs'
+                    : 'ss-btn-secondary font-medium'
                 }`}
               >
                 <span className="leading-none">{CALIBRATED_SITE.name}</span>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium leading-none ${
-                    Math.abs(location.lat - CALIBRATED_SITE.lat) < 0.001 &&
-                    Math.abs(location.lon - CALIBRATED_SITE.lon) < 0.001
-                      ? 'bg-zinc-300 text-zinc-950'
-                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold leading-none ${
+                    isCalibratedSelected
+                      ? 'bg-[#F5AD46] text-[#182321]'
+                      : 'ss-badge-field'
                   }`}
                 >
                   Calibrated Site
@@ -482,7 +489,7 @@ export default function Step1Upload({
             {/* Lat / Lon Inputs */}
             <div className="grid grid-cols-2 gap-4 pt-1">
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1.5 leading-none">
                   Latitude (°N)
                 </label>
                 <input
@@ -492,11 +499,11 @@ export default function Step1Upload({
                   onChange={(e) =>
                     setLocation({ ...location, lat: parseFloat(e.target.value) || 0 })
                   }
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono transition-colors"
+                  className="w-full ss-input rounded-xl px-3 py-2 text-xs font-semibold tabular-nums"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1.5 leading-none">
                   Longitude (°E)
                 </label>
                 <input
@@ -506,27 +513,29 @@ export default function Step1Upload({
                   onChange={(e) =>
                     setLocation({ ...location, lon: parseFloat(e.target.value) || 0 })
                   }
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono transition-colors"
+                  className="w-full ss-input rounded-xl px-3 py-2 text-xs font-semibold tabular-nums"
                 />
               </div>
             </div>
           </div>
 
           {/* Electricity Economics & System Parameters Card (Stable 2x2 Grid, Zero Layout Shift) */}
-          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
+          <div className="p-6 rounded-2xl ss-card space-y-4">
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-emerald-400 shrink-0 -translate-y-px" />
+              <h3 className="text-sm font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-[#37645C] text-[#F6F5EF] inline-flex items-center justify-center shrink-0">
+                  <DollarSign className="w-3.5 h-3.5" />
+                </span>
                 <span className="leading-none">Electricity & Engineering Economics</span>
               </h3>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
                 Calibrates net-metering savings, payback schedules, and satellite resolution.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1.5 leading-none">
                   Grid Tariff Rate
                 </label>
                 <div className="relative">
@@ -538,19 +547,20 @@ export default function Step1Upload({
                     onChange={(e) =>
                       setFinancials({
                         ...financials,
-                        electricityRate: parseFloat(e.target.value) || DEFAULT_FINANCIALS.electricityRate,
+                        electricityRate:
+                          parseFloat(e.target.value) || DEFAULT_FINANCIALS.electricityRate,
                       })
                     }
-                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono pr-14 transition-colors"
+                    className="w-full ss-input rounded-xl px-3 py-2 text-xs font-semibold tabular-nums pr-14"
                   />
-                  <span className="absolute right-2.5 top-2 text-[11px] text-zinc-500 font-mono leading-none">
+                  <span className="absolute right-2.5 top-2 text-[11px] text-[var(--text-muted)] tabular-nums font-medium leading-none">
                     {CURRENCY.symbol}/kWh
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1.5 leading-none">
                   Monthly Electric Bill
                 </label>
                 <div className="relative">
@@ -562,19 +572,20 @@ export default function Step1Upload({
                     onChange={(e) =>
                       setFinancials({
                         ...financials,
-                        monthlyBill: parseFloat(e.target.value) || DEFAULT_FINANCIALS.monthlyBill,
+                        monthlyBill:
+                          parseFloat(e.target.value) || DEFAULT_FINANCIALS.monthlyBill,
                       })
                     }
-                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono pr-12 transition-colors"
+                    className="w-full ss-input rounded-xl px-3 py-2 text-xs font-semibold tabular-nums pr-12"
                   />
-                  <span className="absolute right-2.5 top-2 text-[11px] text-zinc-500 font-mono leading-none">
+                  <span className="absolute right-2.5 top-2 text-[11px] text-[var(--text-muted)] tabular-nums font-medium leading-none">
                     {CURRENCY.symbol}/ay
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1 leading-none">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1.5 leading-none">
                   Turnkey Cost ({CURRENCY.symbol}/kWp)
                 </label>
                 <input
@@ -585,25 +596,22 @@ export default function Step1Upload({
                   onChange={(e) =>
                     setFinancials({
                       ...financials,
-                      installCostPerKwp: parseFloat(e.target.value) || DEFAULT_FINANCIALS.installCostPerKwp,
+                      installCostPerKwp:
+                        parseFloat(e.target.value) || DEFAULT_FINANCIALS.installCostPerKwp,
                     })
                   }
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs text-white font-mono transition-colors"
+                  className="w-full ss-input rounded-xl px-3 py-2 text-xs font-semibold tabular-nums"
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label
-                    className={`block text-[11px] font-medium leading-none ${
-                      sourceMode === 'location' ? 'text-zinc-500' : 'text-zinc-400'
-                    }`}
-                  >
-                    GSD (meters/pixel)
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] leading-none">
+                    GSD (m / pixel)
                   </label>
                   {sourceMode === 'location' && (
-                    <span className="text-[9px] text-zinc-500 font-mono leading-none">
-                      Auto-calibrated
+                    <span className="text-[9px] text-[var(--text-muted)] font-semibold leading-none">
+                      Auto
                     </span>
                   )}
                 </div>
@@ -615,11 +623,7 @@ export default function Step1Upload({
                   value={gsd}
                   disabled={sourceMode === 'location'}
                   onChange={(e) => setGsd(parseFloat(e.target.value) || DEFAULT_PHYSICS.gsd)}
-                  className={`w-full rounded-xl px-3 py-2 text-xs font-mono transition-colors ${
-                    sourceMode === 'location'
-                      ? 'bg-zinc-900/60 border border-zinc-800/60 text-zinc-500 cursor-not-allowed select-none opacity-60'
-                      : 'bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-zinc-500'
-                  }`}
+                  className="w-full ss-input rounded-xl px-3 py-2 text-xs font-semibold tabular-nums"
                   title={
                     sourceMode === 'location'
                       ? 'GSD is automatically fixed by map tile resolution in Location Search mode'
@@ -635,26 +639,27 @@ export default function Step1Upload({
             type="button"
             onClick={handleAnalyzeClick}
             disabled={(sourceMode === 'upload' && !file) || isDetecting || isCapturing}
-            className={`w-full py-4 px-6 rounded-full font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all shadow-sm ${
+            className={`w-full py-4 px-6 rounded-full font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all shadow-sm ${
               (sourceMode === 'upload' && !file) || isDetecting || isCapturing
-                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/60'
-                : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99] cursor-pointer'
+                ? 'ss-well text-[var(--text-muted)] cursor-not-allowed opacity-60'
+                : 'ss-btn-primary active:scale-[0.99] cursor-pointer'
             }`}
           >
             {isCapturing ? (
               <>
-                <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin shrink-0" />
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
                 <span className="leading-none">
                   Locking {MAP_CONFIG.analysisZoom}x Zoom & Capturing Satellite Frame...
                 </span>
               </>
             ) : isDetecting ? (
               <>
-                <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin shrink-0" />
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
                 <span className="leading-none">Scanning Rooftops with U-Net Vision...</span>
               </>
             ) : (
               <>
+                <Sparkles className="w-4 h-4 text-[#F5AD46] shrink-0 -translate-y-px" />
                 <span className="leading-none">
                   {sourceMode === 'location'
                     ? `Zoom ${MAP_CONFIG.analysisZoom}x & Analyze Rooftops`
@@ -669,4 +674,3 @@ export default function Step1Upload({
     </div>
   );
 }
-

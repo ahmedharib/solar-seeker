@@ -1,76 +1,76 @@
 /**
- * Global Theme & Color Tokens for SolarSeeker
+ * Global Theme & Color Tokens for SolarSeeker — Daylight Precision (Brand System 04 & 05)
  *
- * Centralized, harmonious color definitions following an 8px design pattern
- * with consistent surface, status, and chart palettes.
+ * Core Brand Swatches:
+ * - Graphite : #182321 (RGB 24 / 35 / 33)
+ * - Daylight : #F6F5EF (RGB 246 / 245 / 239)
+ * - Solar    : #F5AD46 (RGB 245 / 173 / 70)
+ * - Field    : #37645C (RGB 55 / 100 / 92)
+ * - Signal   : #6750A4 (RGB 103 / 80 / 164)
  */
 
-export const THEME_COLORS = {
-  // Brand & Accent Colors
+export const BRAND_SWATCHES = {
+  graphite: '#182321',
+  daylight: '#F6F5EF',
+  solar: '#F5AD46',
+  field: '#37645C',
+  signal: '#6750A4',
+};
+
+export const getThemeColors = (isDark = false) => ({
   accent: {
-    amber: '#f59e0b',        // Primary solar accent
-    amberHover: '#d97706',   // Amber hover
-    emerald: '#10b981',      // Savings & verified accent
+    solar: '#F5AD46',
+    solarHover: '#E59A2E',
+    field: isDark ? '#599E92' : '#37645C',
+    signal: isDark ? '#9B84DC' : '#6750A4',
+    graphite: '#182321',
+    daylight: '#F6F5EF',
   },
 
-  // Interactive Rooftop Polygons (Step 2 Verification)
   polygons: {
     unselected: {
-      fill: '#f59e0b',
-      fillOpacity: 0.25,
-      hoverFill: '#fbbf24',
-      hoverFillOpacity: 0.45,
-      stroke: '#f59e0b',
+      fill: '#F5AD46',
+      fillOpacity: 0.34,
+      hoverFill: '#E59A2E',
+      hoverFillOpacity: 0.52,
+      stroke: '#F5AD46',
       strokeWidth: 2,
-      badgeFill: '#18181b', // zinc-900
-      badgeStroke: '#f59e0b',
-      badgeText: '#fcd34d', // amber-300
+      badgeFill: '#182321',
+      badgeStroke: '#F5AD46',
+      badgeText: '#F6F5EF',
     },
     selected: {
-      fill: '#10b981',
-      fillOpacity: 0.50,
-      hoverFillOpacity: 0.70,
-      stroke: '#059669',
+      fill: '#37645C',
+      fillOpacity: 0.66,
+      hoverFillOpacity: 0.80,
+      stroke: '#F6F5EF',
       strokeWidth: 2.5,
-      badgeFill: '#10b981',
-      badgeStroke: '#09090b',
-      badgeText: '#09090b',
+      badgeFill: '#37645C',
+      badgeStroke: '#F6F5EF',
+      badgeText: '#F6F5EF',
     },
   },
 
-  // Chart Color Schemes (Feasibility & Phoebe HEMS)
   charts: {
-    monthlyBar: '#f59e0b',        // Amber solar generation bars
-    cashflowProfit: '#10b981',    // Emerald profit area
-    cashflowLoss: '#f43f5e',      // Rose loss area
-    withoutModelUsage: '#fb7185', // Soft muted rose: Grid usage without model
-    naiveBatteryUsage: '#fbbf24', // Muted amber: Naive battery
-    withModelUsage: '#34d399',    // Calm emerald: Phoebe AI
-    batteryDischarge: '#38bdf8',  // Soft sky blue: Battery discharge output
-    withoutModelCost: '#fb7185',  // Soft muted rose: Cumulative cost without model
-    naiveBatteryCost: '#fbbf24',  // Muted amber: Cumulative cost with naive battery
-    withModelCost: '#34d399',     // Calm emerald: Cumulative cost with Phoebe AI
-    gridLines: '#27272a',         // zinc-800 grid lines
-    axisText: '#71717a',          // zinc-500 axis labels
-    referenceLine: '#52525b',     // zinc-600 reference line
-    tooltipBg: '#18181b',         // zinc-900 tooltip container
-    tooltipBorder: '#3f3f46',     // zinc-700 tooltip border
+    monthlyBar: '#F5AD46',                             // Solar (#F5AD46) generation bars
+    cashflowProfit: isDark ? '#599E92' : '#37645C',    // Field (#37645C) profit area
+    cashflowLoss: isDark ? '#E0634B' : '#C2452D',      // Terracotta payoff area
+    withoutModelUsage: isDark ? '#E0634B' : '#C2452D', // Grid-Only baseline
+    naiveBatteryUsage: '#F5AD46',                      // Solar (#F5AD46) Naive battery
+    withModelUsage: isDark ? '#599E92' : '#37645C',    // Field (#37645C) Phoebe AI
+    batteryDischarge: isDark ? '#9B84DC' : '#6750A4',  // Signal (#6750A4) BESS discharge output
+    withoutModelCost: isDark ? '#E0634B' : '#C2452D',  // Grid-Only cumulative cost
+    naiveBatteryCost: '#F5AD46',                       // Solar (#F5AD46) Naive battery cost
+    withModelCost: isDark ? '#599E92' : '#37645C',     // Field (#37645C) Phoebe AI cost
+    gridLines: isDark ? '#2C3E3A' : '#E2DFD3',         // Subtle architectural grid lines
+    axisText: isDark ? '#8B9C98' : '#657370',          // Accessible axis labels
+    referenceLine: isDark ? '#4E6762' : '#B5B1A3',     // Reference line
+    cursorStroke: isDark ? '#599E92' : '#37645C',      // Clean dashed hover cursor
+    tooltipBg: isDark ? '#1F2D2A' : '#FFFFFF',         // Tooltip surface
+    tooltipBorder: isDark ? '#3E5651' : '#DFDDD2',     // Tooltip border
+    tooltipText: isDark ? '#F6F5EF' : '#182321',       // Tooltip primary text
   },
+});
 
-  // Semantic Status Colors
-  status: {
-    profit: '#10b981',
-    loss: '#f43f5e',
-    warning: '#f59e0b',
-    info: '#38bdf8',
-  },
-
-  // Global Surface & Neutral Colors
-  surface: {
-    bg: '#09090b',
-    cardBg: 'bg-zinc-900/40',
-    cardBorder: 'border-zinc-800',
-    subtleBorder: 'border-zinc-800/80',
-    elevatedBg: 'bg-zinc-900',
-  },
-};
+// Default export for static references
+export const THEME_COLORS = getThemeColors(false);

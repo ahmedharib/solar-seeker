@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Check, Zap, Sparkles, ArrowRight, ArrowLeft, Layers, Info } from 'lucide-react';
-import { THEME_COLORS } from '../constants/theme';
+import { getThemeColors } from '../constants/theme';
 import { DEFAULT_PHYSICS } from '../constants/config';
 
 export default function Step2PolygonSelector({
@@ -11,10 +11,12 @@ export default function Step2PolygonSelector({
   onCalculateSolar,
   isCalculating,
   onBack,
+  isDark = false,
 }) {
   const [hoveredPolygon, setHoveredPolygon] = useState(null);
+  const themeColors = getThemeColors(isDark);
 
-  const polygons = detectionResult?.polygons || [];
+  const polygons = useMemo(() => detectionResult?.polygons || [], [detectionResult]);
   const imageWidth = detectionResult?.image_width || 800;
   const imageHeight = detectionResult?.image_height || 600;
 
@@ -75,17 +77,19 @@ export default function Step2PolygonSelector({
   return (
     <div className="space-y-6">
       {/* Top instruction banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl ss-card">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <h2 className="text-base font-semibold text-white tracking-tight">Rooftop Boundary Verification</h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#37645C]" />
+            <h2 className="text-base font-bold text-[var(--text-primary)] tracking-tight">
+              Rooftop Boundary Verification
+            </h2>
+            <span className="text-xs px-2.5 py-0.5 rounded-full ss-badge-field font-bold tabular-nums">
               {polygons.length} detected
             </span>
           </div>
-          <p className="text-xs text-zinc-400">
-            Click on the <strong>polygon(s) that belong to your building</strong>. Neighbors and detached carports can be toggled off.
+          <p className="text-xs text-[var(--text-secondary)]">
+            Click on the <strong>polygon(s) that belong to your building</strong>. Neighbors and detached structures can be toggled off.
           </p>
         </div>
 
@@ -94,22 +98,22 @@ export default function Step2PolygonSelector({
           <button
             type="button"
             onClick={selectAll}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors font-medium cursor-pointer"
+            className="text-xs px-3.5 py-1.5 rounded-full ss-btn-secondary font-semibold cursor-pointer"
           >
             Select All
           </button>
           <button
             type="button"
             onClick={selectLargest}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-zinc-800 transition-colors font-medium inline-flex items-center gap-1.5 cursor-pointer"
+            className="text-xs px-3.5 py-1.5 rounded-full bg-[#F5AD46] hover:bg-[#E59A2E] text-[#182321] font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
+            <Sparkles className="w-3.5 h-3.5 text-[#182321] shrink-0 -translate-y-px" />
             <span className="leading-none">Select Main Roof</span>
           </button>
           <button
             type="button"
             onClick={clearAll}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-500 border border-zinc-800 transition-colors font-medium cursor-pointer"
+            className="text-xs px-3.5 py-1.5 rounded-full ss-btn-secondary text-[var(--text-muted)] font-semibold cursor-pointer"
           >
             Clear
           </button>
@@ -118,8 +122,8 @@ export default function Step2PolygonSelector({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Column: Interactive Screenshot & SVG Polygon Layer */}
-        <div className="lg:col-span-7 flex flex-col justify-between p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
-          <div className="relative flex-1 min-h-[460px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+        <div className="lg:col-span-7 flex flex-col justify-between p-6 rounded-2xl ss-card space-y-4">
+          <div className="relative flex-1 min-h-[460px] rounded-xl overflow-hidden border border-[var(--border-subtle)] bg-[#182321] flex items-center justify-center">
             {/* The Uploaded Screenshot */}
             <img
               src={previewUrl}
@@ -157,15 +161,27 @@ export default function Step2PolygonSelector({
                     >
                       <circle
                         r="12"
-                        fill={isSelected ? THEME_COLORS.polygons.selected.badgeFill : THEME_COLORS.polygons.unselected.badgeFill}
-                        stroke={isSelected ? THEME_COLORS.polygons.selected.badgeStroke : THEME_COLORS.polygons.unselected.badgeStroke}
-                        strokeWidth={isSelected ? 2 : 1}
+                        fill={
+                          isSelected
+                            ? themeColors.polygons.selected.badgeFill
+                            : themeColors.polygons.unselected.badgeFill
+                        }
+                        stroke={
+                          isSelected
+                            ? themeColors.polygons.selected.badgeStroke
+                            : themeColors.polygons.unselected.badgeStroke
+                        }
+                        strokeWidth={isSelected ? 2 : 1.5}
                       />
                       <text
                         y="3.5"
                         textAnchor="middle"
-                        fill={isSelected ? THEME_COLORS.polygons.selected.badgeText : THEME_COLORS.polygons.unselected.badgeText}
-                        className="text-[11px] font-bold"
+                        fill={
+                          isSelected
+                            ? themeColors.polygons.selected.badgeText
+                            : themeColors.polygons.unselected.badgeText
+                        }
+                        className="text-[11px] font-bold tabular-nums"
                       >
                         {poly.id}
                       </text>
@@ -177,7 +193,7 @@ export default function Step2PolygonSelector({
 
             {/* Floating Hover Tooltip */}
             {hoveredPolygon && (
-              <div className="absolute top-4 left-4 bg-zinc-900/95 border border-zinc-700 px-3.5 py-2.5 rounded-xl text-xs space-y-0.5 pointer-events-none shadow-lg">
+              <div className="absolute top-4 left-4 bg-[#182321]/95 border border-[#F6F5EF]/20 px-3.5 py-2.5 rounded-xl text-xs space-y-1 pointer-events-none shadow-lg text-[#F6F5EF]">
                 {(() => {
                   const p = polygons.find((x) => x.id === hoveredPolygon);
                   if (!p) return null;
@@ -185,15 +201,22 @@ export default function Step2PolygonSelector({
                   return (
                     <>
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isSel ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                        <span className="font-semibold text-white">Rooftop #{p.id}</span>
-                        <span className="text-[10px] text-zinc-400">({isSel ? 'Selected' : 'Click to Select'})</span>
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            isSel ? 'bg-[#599E92]' : 'bg-[#F5AD46]'
+                          }`}
+                        />
+                        <span className="font-bold text-[#F6F5EF]">Rooftop #{p.id}</span>
+                        <span className="text-[10px] text-[#F6F5EF]/70">
+                          ({isSel ? 'Selected' : 'Click to Select'})
+                        </span>
                       </div>
-                      <div className="text-[11px] text-zinc-300 font-mono">
-                        Gross: <strong className="text-white">{p.gross_area_m2} m²</strong> • Net Usable: <strong className="text-emerald-400">{p.net_usable_area_m2} m²</strong>
+                      <div className="text-[11px] text-[#F6F5EF]/80 tabular-nums">
+                        Gross: <strong className="text-[#F6F5EF]">{p.gross_area_m2} m²</strong> · Net Usable:{' '}
+                        <strong className="text-[#84C5B9]">{p.net_usable_area_m2} m²</strong>
                       </div>
-                      <div className="text-[11px] text-zinc-300 font-mono">
-                        PV Capacity: <strong className="text-amber-400">{p.estimated_kwp} kWp</strong>
+                      <div className="text-[11px] text-[#F6F5EF]/80 tabular-nums">
+                        PV Capacity: <strong className="text-[#F5AD46]">{p.estimated_kwp} kWp</strong>
                       </div>
                     </>
                   );
@@ -202,33 +225,38 @@ export default function Step2PolygonSelector({
             )}
 
             {/* Visual Legend Overlay (bottom left) */}
-            <div className="absolute bottom-4 left-4 bg-zinc-900/90 border border-zinc-800 px-3.5 py-2 rounded-full flex items-center gap-4 text-xs backdrop-blur-md">
+            <div className="absolute bottom-4 left-4 bg-[#182321]/90 border border-[#F6F5EF]/15 px-3.5 py-2 rounded-full flex items-center gap-4 text-xs backdrop-blur-md">
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full border"
                   style={{
-                    backgroundColor: THEME_COLORS.polygons.selected.fill,
-                    borderColor: THEME_COLORS.polygons.selected.stroke,
+                    backgroundColor: themeColors.polygons.selected.fill,
+                    borderColor: themeColors.polygons.selected.stroke,
                   }}
                 />
-                <span className="text-zinc-200 text-[11px]">Selected (Target)</span>
+                <span className="text-[#F6F5EF] text-[11px] font-medium">Selected (Field)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full border border-dashed"
                   style={{
-                    backgroundColor: `${THEME_COLORS.polygons.unselected.fill}55`,
-                    borderColor: THEME_COLORS.polygons.unselected.stroke,
+                    backgroundColor: `${themeColors.polygons.unselected.fill}66`,
+                    borderColor: themeColors.polygons.unselected.stroke,
                   }}
                 />
-                <span className="text-zinc-400 text-[11px]">Unselected (Neighbor)</span>
+                <span className="text-[#F6F5EF]/75 text-[11px] font-medium">Unselected (Solar)</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-zinc-500 px-1">
+          <div className="flex items-center justify-between text-xs text-[var(--text-muted)] px-1">
             <span>Click any polygon or center pin to toggle selection.</span>
-            <span>Zoom factor: <strong className="text-zinc-400 font-mono">GSD {detectionResult?.gsd || DEFAULT_PHYSICS.gsd} m/px</strong></span>
+            <span className="tabular-nums">
+              Zoom factor:{' '}
+              <strong className="text-[var(--text-secondary)]">
+                GSD {detectionResult?.gsd || DEFAULT_PHYSICS.gsd} m/px
+              </strong>
+            </span>
           </div>
         </div>
 
@@ -236,39 +264,60 @@ export default function Step2PolygonSelector({
         <div className="lg:col-span-5 flex flex-col justify-between gap-6">
           <div className="space-y-6">
             {/* Live Calculation HUD Card */}
-            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
+            <div className="p-6 rounded-2xl ss-card space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Live Selection Sizing</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  Live Selection Sizing
+                </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full ss-badge-field font-bold tabular-nums">
                   {summary.count} of {polygons.length} Selected
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-1">
-                <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                  <div className="text-[11px] text-zinc-400 font-medium">Gross Footprint</div>
-                  <div className="text-xl font-bold text-white mt-1">{summary.grossArea} <span className="text-xs font-normal text-zinc-500">m²</span></div>
+                <div className="p-4 rounded-xl ss-well">
+                  <div className="text-[11px] text-[var(--text-secondary)] font-semibold">
+                    Gross Footprint
+                  </div>
+                  <div className="text-2xl font-bold text-[var(--text-primary)] tabular-nums mt-1">
+                    {summary.grossArea}{' '}
+                    <span className="text-xs font-medium text-[var(--text-muted)]">m²</span>
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                  <div className="text-[11px] text-zinc-400 font-medium">Net Usable ({packingPercent}%)</div>
-                  <div className="text-xl font-bold text-emerald-400 mt-1">{summary.netArea} <span className="text-xs font-normal text-zinc-500">m²</span></div>
+                <div className="p-4 rounded-xl ss-well">
+                  <div className="text-[11px] text-[var(--text-secondary)] font-semibold">
+                    Net Usable ({packingPercent}%)
+                  </div>
+                  <div className="text-2xl font-bold text-[#37645C] dark:text-[#84C5B9] tabular-nums mt-1">
+                    {summary.netArea}{' '}
+                    <span className="text-xs font-medium text-[var(--text-muted)]">m²</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-[#182321] text-[#F6F5EF] border border-[#182321] dark:border-[#3E5651] flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <span className="text-[11px] font-medium text-zinc-400">Recommended Array</span>
-                  <div className="text-2xl font-bold text-white">{summary.kwp} <span className="text-sm font-semibold text-amber-400">kWp</span></div>
+                  <span className="text-[11px] font-medium text-[#F6F5EF]/70">
+                    Recommended Array
+                  </span>
+                  <div className="text-2xl font-bold text-[#F6F5EF] tabular-nums">
+                    {summary.kwp}{' '}
+                    <span className="text-sm font-bold text-[#F5AD46]">kWp</span>
+                  </div>
                 </div>
-                <div className="text-right text-[11px] text-zinc-400 font-mono">
-                  ~{Math.round(summary.netArea / DEFAULT_PHYSICS.sqmPerPanel)} Panels
-                  <div className="text-[10px] text-zinc-500">({Math.round(DEFAULT_PHYSICS.panelDensityKwpPerM2 * DEFAULT_PHYSICS.sqmPerPanel * 1000)}W Mono)</div>
+                <div className="text-right text-[11px] text-[#F6F5EF]/80 tabular-nums">
+                  <span className="font-bold text-[#F6F5EF]">
+                    ~{Math.round(summary.netArea / DEFAULT_PHYSICS.sqmPerPanel)} Panels
+                  </span>
+                  <div className="text-[10px] text-[#F6F5EF]/60">
+                    ({Math.round(DEFAULT_PHYSICS.panelDensityKwpPerM2 * DEFAULT_PHYSICS.sqmPerPanel * 1000)}W Mono)
+                  </div>
                 </div>
               </div>
 
-              <div className="text-[11px] text-zinc-500 flex items-start gap-2 leading-relaxed">
-                <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+              <div className="text-[11px] text-[var(--text-muted)] flex items-start gap-2 leading-relaxed">
+                <Info className="w-3.5 h-3.5 text-[#37645C] dark:text-[#F5AD46] shrink-0 mt-0.5" />
                 <span>
                   The <strong>{packingPercent}% packing factor</strong> reserves fire setbacks, maintenance corridors, and pitch margins automatically.
                 </span>
@@ -276,13 +325,13 @@ export default function Step2PolygonSelector({
             </div>
 
             {/* List of Detected Roofs */}
-            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
+            <div className="p-6 rounded-2xl ss-card space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-zinc-400" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-[#37645C] dark:text-[#F5AD46]" />
                   <span>Detected Polygons</span>
                 </h3>
-                <span className="text-xs text-zinc-500 font-mono">
+                <span className="text-xs text-[var(--text-muted)] font-semibold tabular-nums">
                   {summary.count} enabled
                 </span>
               </div>
@@ -298,25 +347,33 @@ export default function Step2PolygonSelector({
                       onMouseLeave={() => setHoveredPolygon(null)}
                       className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-xs ${
                         isSel
-                          ? 'bg-zinc-900 border-zinc-700 text-white'
-                          : 'bg-zinc-950/60 border-zinc-800/80 text-zinc-400 hover:border-zinc-700'
+                          ? 'bg-[var(--brand-field-subtle)] border-[var(--brand-field-border)] text-[var(--text-primary)] font-semibold'
+                          : 'ss-well text-[var(--text-secondary)] hover:border-[var(--border-strong)]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <div
                           className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
                             isSel
-                              ? 'bg-emerald-500 border-emerald-500 text-zinc-950'
-                              : 'bg-zinc-900 border-zinc-700 text-transparent'
+                              ? 'bg-[#37645C] border-[#37645C] text-[#F6F5EF]'
+                              : 'bg-[var(--bg-surface)] border-[var(--border-strong)] text-transparent'
                           }`}
                         >
                           <Check className="w-3 h-3 stroke-[3]" />
                         </div>
-                        <span className="font-medium text-zinc-200">Roof #{p.id}</span>
+                        <span className="font-bold text-[var(--text-primary)]">
+                          Roof #{p.id}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-3 font-mono text-[11px]">
-                        <span className="text-zinc-400">{p.gross_area_m2} m²</span>
-                        <span className={isSel ? 'text-amber-400 font-semibold' : 'text-zinc-500'}>
+                      <div className="flex items-center gap-3 tabular-nums text-[11px]">
+                        <span className="text-[var(--text-secondary)]">{p.gross_area_m2} m²</span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-bold ${
+                            isSel
+                              ? 'bg-[#F5AD46] text-[#182321]'
+                              : 'text-[var(--text-muted)]'
+                          }`}
+                        >
                           ~{p.estimated_kwp} kWp
                         </span>
                       </div>
@@ -333,21 +390,23 @@ export default function Step2PolygonSelector({
               type="button"
               onClick={onCalculateSolar}
               disabled={summary.count === 0 || isCalculating}
-              className={`w-full py-4 px-6 rounded-full font-semibold text-sm inline-flex items-center justify-center gap-2.5 transition-all shadow-sm ${
+              className={`w-full py-4 px-6 rounded-full font-bold text-sm inline-flex items-center justify-center gap-2.5 transition-all shadow-sm ${
                 summary.count === 0 || isCalculating
-                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/60'
-                  : 'bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.99] cursor-pointer'
+                  ? 'ss-well text-[var(--text-muted)] cursor-not-allowed opacity-60'
+                  : 'ss-btn-primary active:scale-[0.99] cursor-pointer'
               }`}
             >
               {isCalculating ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
                   <span className="leading-none">Querying European Commission PVGIS...</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-4 h-4 text-zinc-950 shrink-0 -translate-y-px" />
-                  <span className="leading-none">Calculate Solar Potential & ROI ({summary.netArea} m²)</span>
+                  <Zap className="w-4 h-4 text-[#F5AD46] shrink-0 -translate-y-px" />
+                  <span className="leading-none tabular-nums">
+                    Calculate Solar Potential & ROI ({summary.netArea} m²)
+                  </span>
                   <ArrowRight className="w-4 h-4 shrink-0 -translate-y-px" />
                 </>
               )}
@@ -357,7 +416,7 @@ export default function Step2PolygonSelector({
               type="button"
               onClick={onBack}
               disabled={isCalculating}
-              className="w-full py-2 text-xs font-medium text-zinc-500 hover:text-zinc-300 inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
               <span className="leading-none">Back to Screenshot Upload</span>

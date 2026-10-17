@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Stepper from "./components/Stepper";
 import Step1Upload from "./components/Step1Upload";
@@ -8,7 +8,20 @@ import Phoebe from "./components/Phoebe";
 import { CALIBRATED_SITE, DEFAULT_FINANCIALS, DEFAULT_PHYSICS } from "./constants/config";
 
 export default function App() {
-  // Top-Level App Feature Navigation ('vision' = Rooftop AI Wizard, 'studio' = Hardware & BESS Studio)
+  // Brand System 04 Theme: 'daylight' (#F6F5EF primary light) | 'graphite' (#182321 deep dark)
+  const [theme, setTheme] = useState("daylight");
+  const isDark = theme === "graphite";
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [isDark]);
+
+  // Top-Level App Feature Navigation ('vision' = Rooftop AI Wizard, 'phoebe' = Phoebe HEMS)
   const [activeTab, setActiveTab] = useState("vision");
 
   // Wizard Navigation (Vision Tab)
@@ -39,7 +52,7 @@ export default function App() {
     const targetFile = overrideFile instanceof File ? overrideFile : file;
     if (!targetFile) {
       setError(
-        'Please upload a satellite screenshot or use Location Search to target a rooftop.',
+        "Please upload a satellite screenshot or use Location Search to target a rooftop."
       );
       return;
     }
@@ -137,13 +150,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-zinc-100 selection:text-zinc-950">
-      {/* Global Header with SVG Logo and App Switcher */}
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen flex flex-col font-sans bg-[var(--bg-canvas)] text-[var(--text-primary)] selection:bg-[#F5AD46] selection:text-[#182321]">
+      {/* Global Header with Brand System Logo, App Switcher & Daylight/Graphite Theme Toggle */}
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        theme={theme}
+        setTheme={setTheme}
+      />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-7">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         {/* TAB 1: Rooftop AI Vision Workflow */}
-        <div className={activeTab === "vision" ? "space-y-6 sm:space-y-7" : "hidden"}>
+        <div className={activeTab === "vision" ? "space-y-6" : "hidden"}>
           {/* Step Progress Stepper */}
           <Stepper
             currentStep={currentStep}
@@ -180,6 +198,7 @@ export default function App() {
                 onCalculateSolar={handleCalculateSolar}
                 isCalculating={isCalculating}
                 onBack={() => setCurrentStep(1)}
+                isDark={isDark}
               />
             )}
 
@@ -188,16 +207,23 @@ export default function App() {
                 results={results}
                 onBackToSelector={() => setCurrentStep(2)}
                 onReset={handleReset}
+                isDark={isDark}
               />
             )}
           </div>
         </div>
 
-        {/* TAB 2: Phoebe */}
+        {/* TAB 2: Phoebe AI HEMS */}
         <div className={activeTab === "phoebe" ? "block" : "hidden"}>
-          <Phoebe isTabActive={activeTab === "phoebe"} />
+          <Phoebe isTabActive={activeTab === "phoebe"} isDark={isDark} />
         </div>
       </main>
+
+      {/* Subtle Brand System Footer */}
+      <footer className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[var(--text-muted)]">
+        <span>SolarSeeker / Daylight Precision</span>
+        <span className="tabular-nums">PVGIS 5.3 · U-Net Vision · Phoebe MPC Dispatch</span>
+      </footer>
     </div>
   );
 }

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.23 486.64" width="100%" height="100%">
+  <!-- Recreated Geometric S Logo Mark -->
+  <!-- Top Chevron (Upper-Left Main Body) -->
+  <path d="M 203.74 0 L 365.05 0 L 165.13 199.93 L 261.24 296.04 L 139.54 296.04 L 23.62 180.12 Z" fill="#172321" />
+
+  <!-- Upper-Right Parallelogram -->
+  <path d="M 400.26 0 L 539.23 0 L 408.99 130.24 L 270.02 130.24 Z" fill="#172321" />
+
+  <!-- Bottom Chevron (Lower-Right Main Body) -->
+  <path d="M 335.49 486.64 L 174.18 486.64 L 374.10 286.71 L 277.99 190.60 L 399.69 190.60 L 515.61 306.52 Z" fill="#172321" />
+
+  <!-- Lower-Left Parallelogram -->
+  <path d="M 138.97 486.64 L 0 486.64 L 130.24 356.40 L 269.21 356.40 Z" fill="#172321" />
+</svg>

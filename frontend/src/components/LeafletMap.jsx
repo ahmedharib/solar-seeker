@@ -88,7 +88,7 @@ const LeafletMap = forwardRef(function LeafletMap(
     }).addTo(map);
   }, [provider]);
 
-  // Sync external coordinate changes (e.g., from typing in lat/lon inputs or clicking Beylikdüzü)
+  // Sync external coordinate changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || isInternalMoveRef.current) return;
@@ -101,7 +101,7 @@ const LeafletMap = forwardRef(function LeafletMap(
     }
   }, [location.lat, location.lon]);
 
-  // Expose flyToAnalysisLevel() to parent component for Address Search & Analyze CTA
+  // Expose flyToAnalysisLevel() to parent component
   useImperativeHandle(ref, () => ({
     flyToLocationAndZoom(targetLat, targetLon, targetZoom = MAP_CONFIG.analysisZoom) {
       return new Promise((resolve) => {
@@ -138,7 +138,6 @@ const LeafletMap = forwardRef(function LeafletMap(
           duration: 0.9,
         });
 
-        // Safety timeout in case animation event is skipped
         setTimeout(done, 1100);
       });
     },
@@ -154,27 +153,27 @@ const LeafletMap = forwardRef(function LeafletMap(
     MAP_CONFIG.tileProviders[provider] || MAP_CONFIG.tileProviders.google;
 
   return (
-    <div className="w-full h-full min-h-[440px] rounded-xl border border-zinc-800 bg-zinc-950 relative overflow-hidden flex flex-col justify-between">
+    <div className="w-full h-full min-h-[440px] rounded-xl border border-[var(--border-subtle)] bg-[#182321] relative overflow-hidden flex flex-col justify-between">
       {/* Interactive Leaflet Map Container */}
       <div
         ref={mapContainerRef}
         className="absolute inset-0 z-0 w-full h-full"
-        style={{ background: '#09090b' }}
+        style={{ background: '#182321' }}
       />
 
-      {/* Subtle Center Reticle (Pointer-Events None so dragging map is unobstructed) */}
+      {/* Center Solar Target Reticle */}
       <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
         <div className="relative flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border border-amber-400/80 bg-amber-400/10 flex items-center justify-center shadow-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+          <div className="w-8 h-8 rounded-full border-2 border-[#F5AD46] bg-[#F5AD46]/15 flex items-center justify-center shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#F5AD46]" />
           </div>
         </div>
       </div>
 
-      {/* Top HUD Overlay */}
+      {/* Top HUD Overlay (Graphite HUD over Satellite Imagery) */}
       <div className="relative z-20 p-4 flex items-center justify-between gap-3 pointer-events-none">
         {/* Provider Toggle Pill */}
-        <div className="pointer-events-auto inline-flex items-center gap-1 p-1 rounded-full bg-zinc-950/90 border border-zinc-800 backdrop-blur-md">
+        <div className="pointer-events-auto inline-flex items-center gap-1 p-1 rounded-full bg-[#182321]/90 border border-[#F6F5EF]/15 backdrop-blur-md">
           {Object.values(MAP_CONFIG.tileProviders).map((p) => {
             const active = provider === p.id;
             return (
@@ -182,13 +181,13 @@ const LeafletMap = forwardRef(function LeafletMap(
                 key={p.id}
                 type="button"
                 onClick={() => setProvider(p.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
                   active
-                    ? 'bg-zinc-800 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'bg-[#F6F5EF] text-[#182321] shadow-xs'
+                    : 'text-[#F6F5EF]/75 hover:text-[#F6F5EF]'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
+                <Layers className="w-3.5 h-3.5 text-[#F5AD46] shrink-0 -translate-y-px" />
                 <span className="leading-none">{p.name}</span>
               </button>
             );
@@ -197,7 +196,7 @@ const LeafletMap = forwardRef(function LeafletMap(
 
         {/* Live Coordinates Badge */}
         <div className="pointer-events-auto flex items-center gap-2">
-          <span className="text-xs font-mono px-3 py-1.5 rounded-full bg-zinc-950/90 border border-zinc-800 text-zinc-200 backdrop-blur-md leading-none">
+          <span className="text-xs font-bold tabular-nums px-3 py-1.5 rounded-full bg-[#182321]/90 border border-[#F6F5EF]/15 text-[#F6F5EF] backdrop-blur-md leading-none">
             {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E
           </span>
         </div>
@@ -208,22 +207,22 @@ const LeafletMap = forwardRef(function LeafletMap(
 
       {/* Bottom Controls Overlay */}
       <div className="relative z-20 p-4 pointer-events-none">
-        <div className="pointer-events-auto flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-950/90 p-3 rounded-xl border border-zinc-800/90 backdrop-blur-md">
+        <div className="pointer-events-auto flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#182321]/92 p-3 rounded-xl border border-[#F6F5EF]/15 backdrop-blur-md">
           <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
             {/* Zoom Controls */}
-            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="flex items-center bg-[#233330] border border-[#F6F5EF]/15 rounded-lg overflow-hidden">
               <button
                 type="button"
                 onClick={() => {
                   const nextZ = Math.min((mapZoom || MAP_CONFIG.analysisZoom) + 1, MAP_CONFIG.maxZoom);
                   mapInstanceRef.current?.setZoom(nextZ);
                 }}
-                className="px-3 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-[#F6F5EF] hover:bg-[#37645C] transition-colors cursor-pointer"
                 title="Zoom In"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
-              <span className="px-3 text-xs font-mono text-zinc-300 border-x border-zinc-800 leading-none py-1.5">
+              <span className="px-3 text-xs font-bold tabular-nums text-[#F6F5EF] border-x border-[#F6F5EF]/15 leading-none py-1.5">
                 Zoom {mapZoom}/{MAP_CONFIG.maxZoom}
               </span>
               <button
@@ -232,16 +231,16 @@ const LeafletMap = forwardRef(function LeafletMap(
                   const nextZ = Math.max((mapZoom || MAP_CONFIG.analysisZoom) - 1, MAP_CONFIG.minZoom);
                   mapInstanceRef.current?.setZoom(nextZ);
                 }}
-                className="px-3 py-1.5 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-[#F6F5EF] hover:bg-[#37645C] transition-colors cursor-pointer"
                 title="Zoom Out"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <span className="text-xs text-zinc-400 leading-none">
+            <span className="text-xs text-[#F6F5EF]/80 leading-none">
               {mapZoom === MAP_CONFIG.analysisZoom ? (
-                <span className="text-emerald-400 font-medium">
+                <span className="text-[#84C5B9] font-semibold">
                   Locked at Analysis Zoom ({MAP_CONFIG.analysisZoom}x)
                 </span>
               ) : (
@@ -261,13 +260,13 @@ const LeafletMap = forwardRef(function LeafletMap(
                 );
               }}
               disabled={isCapturing}
-              className="px-3.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg bg-[#233330] hover:bg-[#37645C] text-[#F6F5EF] border border-[#F6F5EF]/15 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Reset to Calibrated Beylikdüzü Site at Zoom 19"
             >
-              <Crosshair className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
+              <Crosshair className="w-3.5 h-3.5 text-[#F5AD46] shrink-0 -translate-y-px" />
               <span className="leading-none">Snap {MAP_CONFIG.analysisZoom}x</span>
             </button>
-            <span className="text-[10px] text-zinc-500 hidden md:inline leading-none font-mono">
+            <span className="text-[10px] text-[#F6F5EF]/50 hidden md:inline leading-none tabular-nums">
               {activeProviderConfig.attribution}
             </span>
           </div>

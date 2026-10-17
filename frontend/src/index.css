@@ -1,73 +1,331 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --color-graphite: #182321;
+  --color-daylight: #F6F5EF;
+  --color-solar: #F5AD46;
+  --color-field: #37645C;
+  --color-signal: #6750A4;
 }
 
+/* ==========================================================================
+   BRAND SYSTEM 04 & 05 — "Daylight, with depth." & "A single family."
+   Core Swatches:
+   - Graphite : #182321 (24 / 35 / 33)
+   - Daylight : #F6F5EF (246 / 245 / 239)
+   - Solar    : #F5AD46 (245 / 173 / 70)
+   - Field    : #37645C (55 / 100 / 92)
+   - Signal   : #6750A4 (103 / 80 / 164)
+   ========================================================================== */
+
 :root {
-  --color-polygon-unselected: #f59e0b;
-  --color-polygon-unselected-hover: #fbbf24;
-  --color-polygon-selected: #10b981;
-  --color-polygon-selected-stroke: #059669;
-  --color-accent-yellow: #facc15;
-  --color-profit-green: #22c55e;
-  --color-loss-red: #ef4444;
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg-canvas: #F6F5EF;
+  --bg-header: rgba(246, 245, 239, 0.90);
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #FAF9F5;
+  --bg-subtle: #EFECE4;
+  --bg-elevated: #E5E1D6;
+  --bg-overlay: rgba(255, 255, 255, 0.94);
+
+  /* Borders & Dividers */
+  --border-subtle: #DFDDD2;
+  --border-strong: #C6C2B3;
+  --border-focus: #182321;
+
+  /* Typography */
+  --text-primary: #182321;
+  --text-secondary: #4B5956;
+  --text-muted: #707E7A;
+
+  /* Brand Accents & Semantic Tokens (Solar is an accent fill, not body text on ivory) */
+  --brand-graphite: #182321;
+  --brand-daylight: #F6F5EF;
+  --brand-solar: #F5AD46;
+  --brand-solar-hover: #E59A2E;
+  --brand-solar-subtle: #FDF3E1;
+  --brand-solar-border: #F2CB88;
+  --brand-solar-ink: #6E4305;
+
+  --brand-field: #37645C;
+  --brand-field-vivid: #37645C;
+  --brand-field-subtle: #E7F0EE;
+  --brand-field-border: #B4D0CA;
+  --brand-field-ink: #254741;
+
+  --brand-signal: #6750A4;
+  --brand-signal-vivid: #6750A4;
+  --brand-signal-subtle: #EFEBF8;
+  --brand-signal-border: #CCC0EA;
+  --brand-signal-ink: #4A3780;
+
+  --brand-danger: #C2452D;
+  --brand-danger-subtle: #FBECE8;
+  --brand-danger-border: #EEC1B6;
+  --brand-danger-ink: #8E2C19;
+
+  /* Primary Action Button (Graphite fill with Daylight text in Light mode) */
+  --cta-bg: #182321;
+  --cta-bg-hover: #253633;
+  --cta-text: #F6F5EF;
+
+  /* Polygon Tokens */
+  --color-polygon-unselected: #F5AD46;
+  --color-polygon-unselected-hover: #E59A2E;
+  --color-polygon-selected: #37645C;
+  --color-polygon-selected-stroke: #182321;
+
+  /* Shadows */
+  --card-shadow: 0 1px 3px rgba(24, 35, 33, 0.04), 0 1px 2px rgba(24, 35, 33, 0.02);
+  --card-shadow-elevated: 0 8px 24px -4px rgba(24, 35, 33, 0.08), 0 2px 6px rgba(24, 35, 33, 0.04);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg-canvas: #182321;
+  --bg-header: rgba(24, 35, 33, 0.90);
+  --bg-surface: #1F2D2A;
+  --bg-surface-hover: #253632;
+  --bg-subtle: #131C1A;
+  --bg-elevated: #2A3C38;
+  --bg-overlay: rgba(24, 35, 33, 0.94);
+
+  /* Borders & Dividers */
+  --border-subtle: #2C3E3A;
+  --border-strong: #3E5651;
+  --border-focus: #F5AD46;
+
+  /* Typography */
+  --text-primary: #F6F5EF;
+  --text-secondary: #B7C2BF;
+  --text-muted: #7E8F8B;
+
+  /* Brand Accents & Semantic Tokens */
+  --brand-graphite: #182321;
+  --brand-daylight: #F6F5EF;
+  --brand-solar: #F5AD46;
+  --brand-solar-hover: #F7BC66;
+  --brand-solar-subtle: rgba(245, 173, 70, 0.14);
+  --brand-solar-border: rgba(245, 173, 70, 0.36);
+  --brand-solar-ink: #F5AD46;
+
+  --brand-field: #37645C;
+  --brand-field-vivid: #599E92;
+  --brand-field-subtle: rgba(55, 100, 92, 0.28);
+  --brand-field-border: rgba(89, 158, 146, 0.42);
+  --brand-field-ink: #84C5B9;
+
+  --brand-signal: #6750A4;
+  --brand-signal-vivid: #9B84DC;
+  --brand-signal-subtle: rgba(103, 80, 164, 0.26);
+  --brand-signal-border: rgba(155, 132, 220, 0.42);
+  --brand-signal-ink: #C2B2F0;
+
+  --brand-danger: #E0634B;
+  --brand-danger-subtle: rgba(224, 99, 75, 0.18);
+  --brand-danger-border: rgba(224, 99, 75, 0.36);
+  --brand-danger-ink: #F39E8E;
+
+  /* Primary Action Button (Daylight fill with Graphite text in Dark mode) */
+  --cta-bg: #F6F5EF;
+  --cta-bg-hover: #E5E2D7;
+  --cta-text: #182321;
+
+  /* Polygon Tokens */
+  --color-polygon-unselected: #F5AD46;
+  --color-polygon-unselected-hover: #F7BC66;
+  --color-polygon-selected: #37645C;
+  --color-polygon-selected-stroke: #84C5B9;
+
+  /* Shadows */
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  --card-shadow-elevated: 0 12px 28px -6px rgba(0, 0, 0, 0.45);
 }
 
 @layer base {
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    @apply bg-[#09090b] text-zinc-100 antialiased min-h-screen selection:bg-zinc-100 selection:text-zinc-950;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Brand System 05: "A single family. A clear hierarchy. Readable tabular figures for product data." */
+  .font-mono,
+  .tabular-nums {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 0;
   }
 }
 
-/* Custom interactive polygon styling - Clean, Crisp & Flat */
+/* ==========================================================================
+   Reusable Brand System Component Primitives
+   ========================================================================== */
+
+.ss-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--card-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ss-card-hero {
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--brand-field-border);
+  box-shadow: var(--card-shadow-elevated);
+}
+
+.ss-well {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.ss-pill-track {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.ss-pill-active {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(24, 35, 33, 0.06);
+}
+
+.ss-input {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ss-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  background-color: var(--bg-surface);
+}
+
+.ss-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ss-btn-primary {
+  background-color: var(--cta-bg);
+  color: var(--cta-text);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.ss-btn-primary:hover:not(:disabled) {
+  background-color: var(--cta-bg-hover);
+}
+
+.ss-btn-secondary {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ss-btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+/* Solar Icon Box — Ensures #F5AD46 Solar icon always sits on a high-contrast surface */
+.ss-icon-solar {
+  background-color: var(--brand-graphite);
+  color: var(--brand-solar);
+}
+
+.dark .ss-icon-solar {
+  background-color: rgba(245, 173, 70, 0.14);
+  color: var(--brand-solar);
+}
+
+/* Semantic Status Badges */
+.ss-badge-solar {
+  background-color: var(--brand-solar-subtle);
+  border: 1px solid var(--brand-solar-border);
+  color: var(--brand-solar-ink);
+}
+
+.ss-badge-field {
+  background-color: var(--brand-field-subtle);
+  border: 1px solid var(--brand-field-border);
+  color: var(--brand-field-ink);
+}
+
+.ss-badge-signal {
+  background-color: var(--brand-signal-subtle);
+  border: 1px solid var(--brand-signal-border);
+  color: var(--brand-signal-ink);
+}
+
+.ss-badge-danger {
+  background-color: var(--brand-danger-subtle);
+  border: 1px solid var(--brand-danger-border);
+  color: var(--brand-danger-ink);
+}
+
+/* Custom interactive rooftop polygon styling */
 .roof-polygon {
-  transition: fill 0.15s ease, stroke-width 0.15s ease;
+  transition: fill 0.15s ease, stroke-width 0.15s ease, fill-opacity 0.15s ease;
   cursor: pointer;
   vector-effect: non-scaling-stroke;
 }
 
 .roof-polygon-unselected {
-  fill: var(--color-polygon-unselected, #f59e0b);
-  fill-opacity: 0.35;
-  stroke: var(--color-polygon-unselected, #f59e0b);
+  fill: var(--color-polygon-unselected, #F5AD46);
+  fill-opacity: 0.34;
+  stroke: var(--color-polygon-unselected, #F5AD46);
   stroke-width: 2;
   stroke-dasharray: 4, 3;
 }
 
 .roof-polygon-unselected:hover {
-  fill: var(--color-polygon-unselected-hover, #fbbf24);
-  fill-opacity: 0.55;
+  fill: var(--color-polygon-unselected-hover, #E59A2E);
+  fill-opacity: 0.52;
   stroke-width: 2.5;
   stroke-dasharray: none;
 }
 
 .roof-polygon-selected {
-  fill: var(--color-polygon-selected, #10b981);
-  fill-opacity: 0.65;
-  stroke: var(--color-polygon-selected-stroke, #059669);
-  stroke-width: 3;
+  fill: var(--color-polygon-selected, #37645C);
+  fill-opacity: 0.66;
+  stroke: #F6F5EF;
+  stroke-width: 2.5;
 }
 
 .roof-polygon-selected:hover {
-  fill-opacity: 0.8;
-  stroke-width: 3.5;
+  fill-opacity: 0.80;
+  stroke-width: 3;
 }
 
-/* ElevenLabs minimal subtle custom scrollbar */
+/* Minimal custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: var(--bg-canvas);
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: var(--border-strong);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--text-muted);
 }

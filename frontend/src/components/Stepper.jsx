@@ -10,7 +10,7 @@ const STEPS = [
 export default function Stepper({ currentStep, onStepClick, maxStepAllowed = 1 }) {
   return (
     <nav aria-label="Progress" className="w-full">
-      <ol className="grid grid-cols-1 md:grid-cols-3 gap-3 p-1.5 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl">
+      <ol className="grid grid-cols-1 md:grid-cols-3 gap-3 p-2 ss-well rounded-2xl">
         {STEPS.map((step) => {
           const isCurrent = currentStep === step.id;
           const isCompleted = currentStep > step.id;
@@ -21,37 +21,45 @@ export default function Stepper({ currentStep, onStepClick, maxStepAllowed = 1 }
             <li
               key={step.id}
               onClick={() => isClickable && onStepClick && onStepClick(step.id)}
-              className={`relative flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl border select-none transition-all ${
-                isClickable ? 'cursor-pointer hover:border-zinc-700 hover:bg-zinc-900/70' : ''
+              className={`relative flex items-center gap-3.5 p-3.5 rounded-xl border select-none transition-all ${
+                isClickable
+                  ? 'cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]'
+                  : ''
               } ${
                 isCurrent
-                  ? 'bg-zinc-900 border-zinc-700 shadow-sm'
+                  ? 'bg-[var(--bg-surface)] border-[var(--border-strong)] shadow-sm'
                   : isCompleted
-                  ? 'bg-zinc-900/40 border-zinc-800/80'
-                  : 'bg-transparent border-transparent opacity-50'
+                  ? 'bg-[var(--bg-surface)]/60 border-[var(--border-subtle)]'
+                  : 'bg-transparent border-transparent opacity-55'
               }`}
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-xs shrink-0 transition-colors ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                   isCurrent
-                    ? 'bg-white text-zinc-950 font-bold'
+                    ? 'bg-[#F5AD46] text-[#182321] shadow-xs'
                     : isCompleted
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-zinc-800 text-zinc-400 border border-zinc-700/60'
+                    ? 'bg-[#37645C] text-[#F6F5EF]'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
                 }`}
               >
                 {isCompleted ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Icon className="w-4 h-4" />}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 leading-none">
-                    Step {step.id}
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] tabular-nums leading-none">
+                    Step 0{step.id}
                   </span>
                 </div>
-                <h3 className={`text-xs sm:text-sm font-semibold truncate leading-none mt-1 ${isCurrent ? 'text-white' : 'text-zinc-300'}`}>
+                <h3
+                  className={`text-xs sm:text-sm font-bold truncate leading-none mt-1 ${
+                    isCurrent ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                  }`}
+                >
                   {step.title}
                 </h3>
-                <p className="text-[11px] text-zinc-500 truncate leading-none mt-1">{step.subtitle}</p>
+                <p className="text-[11px] text-[var(--text-muted)] truncate leading-none mt-1">
+                  {step.subtitle}
+                </p>
               </div>
             </li>
           );
