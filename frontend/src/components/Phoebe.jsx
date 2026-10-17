@@ -317,7 +317,7 @@ export default function Phoebe({ isTabActive = true }) {
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <Database className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
+                <Database className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">Test Data CSV</span>
               </button>
 
@@ -333,7 +333,7 @@ export default function Phoebe({ isTabActive = true }) {
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <UploadCloud className="w-3.5 h-3.5 shrink-0 -translate-y-px" />
+                <UploadCloud className="w-3.5 h-3.5 text-amber-400 shrink-0 -translate-y-px" />
                 <span className="leading-none">Upload CSV</span>
               </button>
             </div>
@@ -365,17 +365,17 @@ export default function Phoebe({ isTabActive = true }) {
                       }}
                       className={`text-left p-4 rounded-xl border transition-all cursor-pointer ${
                         active
-                          ? 'bg-zinc-900 border-amber-400/60 shadow-sm'
+                          ? 'bg-zinc-900 border-zinc-600 shadow-sm'
                           : 'bg-zinc-950/70 border-zinc-800/80 hover:border-zinc-700'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-xs font-semibold leading-none ${active ? 'text-amber-400' : 'text-zinc-200'}`}>
+                        <span className={`text-xs font-semibold leading-none ${active ? 'text-white' : 'text-zinc-300'}`}>
                           {preset.label}
                         </span>
                         <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border leading-none ${
                           active
-                            ? 'bg-amber-400/10 text-amber-400 border-amber-400/20'
+                            ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
                             : 'bg-zinc-900 text-zinc-400 border-zinc-800'
                         }`}>
                           {preset.badge || (active ? 'Selected' : 'Household')}
@@ -399,7 +399,7 @@ export default function Phoebe({ isTabActive = true }) {
               onClick={() => fileInputRef.current?.click()}
               className={`flex-1 min-h-[220px] cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all flex flex-col items-center justify-center ${
                 dragActive
-                  ? 'border-amber-400 bg-amber-400/5'
+                  ? 'border-zinc-500 bg-zinc-900/60'
                   : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/60'
               }`}
             >
@@ -411,7 +411,7 @@ export default function Phoebe({ isTabActive = true }) {
                 onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
               />
               <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-3 text-amber-400">
-                <UploadCloud className="w-6 h-6" />
+                <UploadCloud className="w-6 h-6 text-amber-400" />
               </div>
               {csvFile ? (
                 <div className="space-y-1">
@@ -419,14 +419,14 @@ export default function Phoebe({ isTabActive = true }) {
                   <p className="text-xs text-zinc-400">
                     {(csvFile.size / 1024).toFixed(1)} KB · Click or drop another CSV to replace
                   </p>
-                  <p className="text-xs font-mono text-emerald-400 pt-1">
+                  <p className="text-xs font-mono text-zinc-300 pt-1">
                     ✓ CSV staged — Click "Run Simulation" below to forecast
                   </p>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-zinc-200">
-                    Drop your household consumption <span className="text-amber-400 font-mono">.csv</span> here, or click to browse
+                    Drop your household consumption <span className="text-zinc-300 font-mono">.csv</span> here, or click to browse
                   </p>
                   <p className="text-xs text-zinc-500">
                     Reads the last 180 minutes of power demand (kW) from column 0 to forecast the peak window
@@ -469,7 +469,7 @@ export default function Phoebe({ isTabActive = true }) {
 
             <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
               <div className="text-[10px] text-zinc-500 font-mono leading-none">Peak (17–22)</div>
-              <div className="text-sm font-bold text-amber-400 font-mono mt-1">
+              <div className="text-sm font-bold text-white font-mono mt-1">
                 {CURRENCY.symbol}{PHOEBE_CONFIG.tariffs.peakTl}
               </div>
               <div className="text-[10px] text-zinc-400 mt-0.5 leading-none">AI Peak Window</div>
@@ -567,8 +567,8 @@ export default function Phoebe({ isTabActive = true }) {
       {/* Pre-Simulation Standby State */}
       {!simulation && (
         <div className="p-8 sm:p-12 rounded-2xl bg-zinc-900/30 border border-zinc-800 text-center space-y-6">
-          <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-amber-400 flex items-center justify-center mx-auto">
-            <Sparkles className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-amber-400 flex items-center justify-center mx-auto">
+            <Sparkles className="w-6 h-6 text-amber-400" />
           </div>
           <div className="max-w-xl mx-auto space-y-2">
             <h3 className="text-base font-bold text-white tracking-tight">
@@ -612,7 +612,7 @@ export default function Phoebe({ isTabActive = true }) {
           {/* Interactive Timelapse Playback Bar */}
           <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {/* Play / Pause / Resume Button - Crisp White */}
+              {/* Play / Pause / Resume Button - Yellow with White Text */}
               <button
                 type="button"
                 onClick={() => {
@@ -623,7 +623,7 @@ export default function Phoebe({ isTabActive = true }) {
                     setIsPlaying(!isPlaying);
                   }
                 }}
-                className="px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center gap-2 font-semibold text-xs transition-colors shrink-0 cursor-pointer shadow-sm"
+                className="px-4 py-2 rounded-full bg-amber-500 hover:bg-amber-400 text-white flex items-center gap-2 font-semibold text-xs transition-colors shrink-0 cursor-pointer shadow-sm"
                 title={
                   isPlaying
                     ? 'Pause Timelapse'
@@ -636,22 +636,22 @@ export default function Phoebe({ isTabActive = true }) {
               >
                 {isPlaying ? (
                   <>
-                    <Pause className="w-3.5 h-3.5 fill-zinc-950 shrink-0" />
+                    <Pause className="w-3.5 h-3.5 fill-white text-white shrink-0" />
                     <span className="leading-none">Pause Timelapse</span>
                   </>
                 ) : currentStepIndex >= totalSteps - 1 ? (
                   <>
-                    <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                    <RotateCcw className="w-3.5 h-3.5 text-white shrink-0" />
                     <span className="leading-none">Replay Timelapse</span>
                   </>
                 ) : currentStepIndex === 0 ? (
                   <>
-                    <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 ml-0.5" />
+                    <Play className="w-3.5 h-3.5 fill-white text-white shrink-0 ml-0.5" />
                     <span className="leading-none">Start Timelapse</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 fill-zinc-950 shrink-0 ml-0.5" />
+                    <Play className="w-3.5 h-3.5 fill-white text-white shrink-0 ml-0.5" />
                     <span className="leading-none">Resume Timelapse</span>
                   </>
                 )}
@@ -663,7 +663,7 @@ export default function Phoebe({ isTabActive = true }) {
                   setIsPlaying(false);
                   setCurrentStepIndex(0);
                 }}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-amber-400 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
                 title="Restart from 17:00"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -675,7 +675,7 @@ export default function Phoebe({ isTabActive = true }) {
                   setIsPlaying(false);
                   setCurrentStepIndex(totalSteps - 1);
                 }}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-amber-400 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
                 title={`Skip to End (${endTimestamp})`}
               >
                 <FastForward className="w-3.5 h-3.5" />
@@ -691,19 +691,20 @@ export default function Phoebe({ isTabActive = true }) {
                     Min {currentStepIndex + 1} / {totalSteps}
                   </span>
                   {isPlaying ? (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none animate-pulse">
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/60 leading-none inline-flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Live Playing
                     </span>
                   ) : currentStepIndex >= totalSteps - 1 ? (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 leading-none">
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 leading-none">
                       Completed
                     </span>
                   ) : currentStepIndex > 0 ? (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 leading-none">
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/60 leading-none">
                       Paused
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 leading-none">
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 leading-none">
                       Ready to Play
                     </span>
                   )}
@@ -741,8 +742,8 @@ export default function Phoebe({ isTabActive = true }) {
                   onClick={() => setSpeedIndex(idx)}
                   className={`text-xs font-mono px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
                     speedIndex === idx
-                      ? 'bg-zinc-800 text-amber-400 border-amber-400/40 font-semibold shadow-sm'
-                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
+                      ? 'bg-amber-400/15 text-amber-400 border-amber-500/40 font-semibold shadow-sm'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-amber-400'
                   }`}
                 >
                   {s.label}
@@ -758,11 +759,11 @@ export default function Phoebe({ isTabActive = true }) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">Grid-Only</span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none">
-                    No Battery (Baseline)
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 leading-none">
+                    Baseline
                   </span>
                 </div>
                 <div>
@@ -781,7 +782,7 @@ export default function Phoebe({ isTabActive = true }) {
                   </div>
                   <div>
                     <span className="text-zinc-500 block text-[10px] leading-none mb-1">Peak Exposure</span>
-                    <span className="text-rose-400 font-semibold">100% Utility</span>
+                    <span className="text-zinc-300 font-semibold font-mono">100% Utility</span>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-500 leading-snug">
@@ -795,16 +796,16 @@ export default function Phoebe({ isTabActive = true }) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">Naive Battery</span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none">
-                    Standard BESS (No AI)
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 leading-none">
+                    Standard BESS
                   </span>
                 </div>
                 <div>
                   <div className="text-[11px] text-zinc-500 font-mono leading-none">Cumulative Peak Bill</div>
-                  <div className="text-2xl font-bold text-amber-400 font-mono mt-1 leading-tight">
+                  <div className="text-2xl font-bold text-white font-mono mt-1 leading-tight">
                     {CURRENCY.symbol}{liveMetrics.cumCostNaiveTl.toFixed(2)}
                   </div>
                 </div>
@@ -818,14 +819,14 @@ export default function Phoebe({ isTabActive = true }) {
                   </div>
                   <div>
                     <span className="text-zinc-500 block text-[10px] leading-none mb-1">Battery State</span>
-                    <span className={liveMetrics.naiveSocPercent <= 0.1 ? 'text-amber-400 font-bold' : 'text-zinc-300 font-semibold'}>
+                    <span className="text-zinc-300 font-semibold font-mono">
                       {liveMetrics.naiveSocPercent}% SoC
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-400 leading-snug">
                   {liveMetrics.naiveSocPercent <= 0.1 ? (
-                    <span className="text-amber-400 font-medium">
+                    <span className="text-zinc-300 font-medium">
                       ⚠️ Depleted at {liveMetrics.naiveDepletedTimestamp || '18:38'} (0% SoC). Exhausted early, leaving late peaks exposed.
                     </span>
                   ) : (
@@ -835,43 +836,53 @@ export default function Phoebe({ isTabActive = true }) {
               </div>
             </div>
 
-            {/* Arm 3: Phoebe AI - Harmonized to Matching Surface */}
-            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 relative overflow-hidden flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
+            {/* Arm 3: Phoebe AI - Elevated & Focused Highlight */}
+            <div className="p-6 rounded-2xl bg-zinc-900/70 border border-zinc-700/80 ring-1 ring-emerald-500/25 shadow-lg shadow-black/40 relative overflow-hidden flex flex-col justify-between space-y-4">
+              {/* Subtle Top Gradient Highlight Line */}
+              <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+              {/* Soft Ambient Radial Backlight */}
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="space-y-3 relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                    <div className="w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Sparkles className="w-3 h-3" />
+                    </div>
                     <span className="text-xs font-bold text-white uppercase tracking-wider">Phoebe AI</span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold leading-none">
-                    AI + MPC Dispatch
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold leading-none inline-flex items-center gap-1 shadow-sm">
+                    <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                    AI Optimized
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <div className="text-[11px] text-zinc-500 font-mono leading-none">Cumulative Peak Bill</div>
-                    <div className="text-2xl font-bold text-emerald-400 font-mono mt-1 leading-tight">
+                    <div className="text-[11px] text-zinc-400 font-mono leading-none">Cumulative Peak Bill</div>
+                    <div className="text-2xl font-bold text-white font-mono mt-1 leading-tight">
                       {CURRENCY.symbol}{liveMetrics.cumCostWithTl.toFixed(2)}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[11px] text-zinc-500 font-mono leading-none">Extra vs Naive</div>
-                    <div className="text-sm font-bold text-amber-400 font-mono mt-1 leading-tight">
-                      +{CURRENCY.symbol}{liveMetrics.aiVsNaiveSavingsTl.toFixed(2)} (+{liveMetrics.aiVsNaivePercent}%)
+                    <div className="text-[11px] text-zinc-400 font-mono leading-none">Extra vs Naive</div>
+                    <div className="mt-1">
+                      <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md inline-block leading-none">
+                        +{CURRENCY.symbol}{liveMetrics.aiVsNaiveSavingsTl.toFixed(2)} (+{liveMetrics.aiVsNaivePercent}%)
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-3 border-t border-zinc-800/80">
+              <div className="space-y-2 pt-3 border-t border-zinc-800/80 relative z-10">
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                   <div>
                     <span className="text-zinc-500 block text-[10px] leading-none mb-1">Grid Import</span>
-                    <span className="text-emerald-400 font-semibold">{liveMetrics.cumGridWithKwh} kWh</span>
+                    <span className="text-emerald-400/90 font-semibold font-mono">{liveMetrics.cumGridWithKwh} kWh</span>
                   </div>
                   <div>
                     <span className="text-zinc-500 block text-[10px] leading-none mb-1">Battery State</span>
-                    <span className="text-emerald-400 font-semibold">{liveMetrics.socPercent}% SoC ({liveMetrics.remainingKwh} kWh)</span>
+                    <span className="text-emerald-400/90 font-semibold font-mono">{liveMetrics.socPercent}% SoC ({liveMetrics.remainingKwh} kWh)</span>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-300 leading-snug">
@@ -901,7 +912,7 @@ export default function Phoebe({ isTabActive = true }) {
             <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="leading-none">Net Peak Savings</span>
-                <span className="text-emerald-400 font-mono text-xs font-semibold leading-none">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/60 leading-none">
                   -{liveMetrics.savingsPercent}% Bill
                 </span>
               </div>
@@ -926,7 +937,7 @@ export default function Phoebe({ isTabActive = true }) {
                 </span>
               </div>
               <p className="text-xs text-zinc-500 leading-tight font-mono">
-                MPC Cap: <strong className="text-zinc-200">{liveMetrics.dischargeCapKw} kW</strong> · Out: <strong className="text-sky-400">{liveMetrics.batteryOutputKw} kW</strong>
+                MPC Cap: <strong className="text-zinc-200">{liveMetrics.dischargeCapKw} kW</strong> · Out: <strong className="text-zinc-200">{liveMetrics.batteryOutputKw} kW</strong>
               </p>
             </div>
 
@@ -934,7 +945,7 @@ export default function Phoebe({ isTabActive = true }) {
             <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="leading-none">Grid Independence</span>
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
               </div>
               <div className="text-2xl font-bold text-white tracking-tight font-mono">
                 {liveMetrics.gridIndependenceScore}%
@@ -960,16 +971,20 @@ export default function Phoebe({ isTabActive = true }) {
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 shrink-0">
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none text-center">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                     Grid-Only
                   </span>
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none text-center">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
                     Naive Battery
                   </span>
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none text-center">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                     Phoebe AI
                   </span>
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 leading-none text-center">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
                     BESS Out
                   </span>
                 </div>
@@ -980,12 +995,12 @@ export default function Phoebe({ isTabActive = true }) {
                   <AreaChart data={visibleTimeline} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                     <defs>
                       <linearGradient id="usageWithoutGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.25} />
-                        <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.01} />
+                        <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.08} />
+                        <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelUsage} stopOpacity={0.00} />
                       </linearGradient>
                       <linearGradient id="usageWithGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={THEME_COLORS.charts.withModelUsage} stopOpacity={0.4} />
-                        <stop offset="95%" stopColor={THEME_COLORS.charts.withModelUsage} stopOpacity={0.05} />
+                        <stop offset="5%" stopColor={THEME_COLORS.charts.withModelUsage} stopOpacity={0.12} />
+                        <stop offset="95%" stopColor={THEME_COLORS.charts.withModelUsage} stopOpacity={0.01} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={THEME_COLORS.charts.gridLines} />
@@ -1010,18 +1025,36 @@ export default function Phoebe({ isTabActive = true }) {
                               }}
                             >
                               <p className="font-semibold text-white leading-none">Time: {d.timestamp}</p>
-                              <p className="text-rose-400">
-                                Grid-Only Demand: <strong>{d.demand_without_model_kw} kW</strong>
-                              </p>
-                              <p className="text-amber-400">
-                                Naive Battery Grid: <strong>{d.grid_draw_naive_kw} kW</strong> (SoC: {d.battery_soc_naive_percent}%)
-                              </p>
-                              <p className="text-emerald-400">
-                                Phoebe AI Grid: <strong>{d.grid_draw_with_model_kw} kW</strong> (SoC: {d.battery_soc_percent}%)
-                              </p>
-                              <p className="text-sky-400">
-                                Phoebe BESS Output: <strong>{d.battery_output_kw} kW</strong> <span className="text-zinc-400 text-[10px]">(Cap: {d.discharge_cap_kw} kW)</span>
-                              </p>
+                              <div className="space-y-1 pt-1">
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                                    Grid-Only
+                                  </span>
+                                  <strong className="text-zinc-200">{d.demand_without_model_kw} kW</strong>
+                                </p>
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                    Naive Battery
+                                  </span>
+                                  <strong className="text-zinc-200">{d.grid_draw_naive_kw} kW</strong>
+                                </p>
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                    Phoebe AI
+                                  </span>
+                                  <strong className="text-zinc-200">{d.grid_draw_with_model_kw} kW</strong>
+                                </p>
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+                                    BESS Out
+                                  </span>
+                                  <strong className="text-zinc-200">{d.battery_output_kw} kW</strong>
+                                </p>
+                              </div>
                             </div>
                           );
                         }
@@ -1040,7 +1073,7 @@ export default function Phoebe({ isTabActive = true }) {
                       type="monotone"
                       dataKey="grid_draw_naive_kw"
                       stroke={THEME_COLORS.charts.naiveBatteryUsage}
-                      strokeWidth={2}
+                      strokeWidth={1.5}
                       strokeDasharray="4 4"
                       fill="none"
                       isAnimationActive={false}
@@ -1049,7 +1082,7 @@ export default function Phoebe({ isTabActive = true }) {
                       type="monotone"
                       dataKey="grid_draw_with_model_kw"
                       stroke={THEME_COLORS.charts.withModelUsage}
-                      strokeWidth={2.5}
+                      strokeWidth={2}
                       fill="url(#usageWithGrad)"
                       isAnimationActive={false}
                     />
@@ -1082,14 +1115,17 @@ export default function Phoebe({ isTabActive = true }) {
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 shrink-0">
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 leading-none text-center">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                     Grid-Only ({CURRENCY.symbol})
                   </span>
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 leading-none text-center">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
                     Naive BESS ({CURRENCY.symbol})
                   </span>
                   <div className="col-span-2 flex justify-center">
-                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none text-center">
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 inline-flex items-center justify-center gap-1.5 leading-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                       Phoebe AI ({CURRENCY.symbol})
                     </span>
                   </div>
@@ -1101,12 +1137,12 @@ export default function Phoebe({ isTabActive = true }) {
                   <AreaChart data={visibleTimeline} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
                     <defs>
                       <linearGradient id="costWithoutGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.25} />
-                        <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.02} />
+                        <stop offset="5%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.08} />
+                        <stop offset="95%" stopColor={THEME_COLORS.charts.withoutModelCost} stopOpacity={0.00} />
                       </linearGradient>
                       <linearGradient id="costWithGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={THEME_COLORS.charts.withModelCost} stopOpacity={0.45} />
-                        <stop offset="95%" stopColor={THEME_COLORS.charts.withModelCost} stopOpacity={0.05} />
+                        <stop offset="5%" stopColor={THEME_COLORS.charts.withModelCost} stopOpacity={0.12} />
+                        <stop offset="95%" stopColor={THEME_COLORS.charts.withModelCost} stopOpacity={0.01} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={THEME_COLORS.charts.gridLines} />
@@ -1131,22 +1167,38 @@ export default function Phoebe({ isTabActive = true }) {
                               }}
                             >
                               <p className="font-semibold text-white leading-none">Time: {d.timestamp}</p>
-                              <p className="text-rose-400">
-                                Grid-Only Cost: <strong>{CURRENCY.symbol}{d.cumulative_cost_without_model_tl?.toFixed(2)}</strong>
-                              </p>
-                              <p className="text-amber-400">
-                                Naive Battery Cost: <strong>{CURRENCY.symbol}{d.cumulative_cost_naive_tl?.toFixed(2)}</strong>
-                              </p>
-                              <p className="text-emerald-400">
-                                Phoebe AI Cost: <strong>{CURRENCY.symbol}{d.cumulative_cost_with_model_tl?.toFixed(2)}</strong>
-                              </p>
-                              <div className="pt-1 border-t border-zinc-800 space-y-0.5">
-                                <p className="text-emerald-400 font-bold">
-                                  Saved vs Grid: +{CURRENCY.symbol}{d.cumulative_savings_tl?.toFixed(2)}
+                              <div className="space-y-1 pt-1">
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                                    Grid-Only Cost
+                                  </span>
+                                  <strong className="text-zinc-200">{CURRENCY.symbol}{d.cumulative_cost_without_model_tl?.toFixed(2)}</strong>
                                 </p>
-                                <p className="text-amber-400 font-bold">
-                                  Extra vs Naive: +{CURRENCY.symbol}{d.cumulative_ai_vs_naive_savings_tl?.toFixed(2)}
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                    Naive Battery Cost
+                                  </span>
+                                  <strong className="text-zinc-200">{CURRENCY.symbol}{d.cumulative_cost_naive_tl?.toFixed(2)}</strong>
                                 </p>
+                                <p className="text-zinc-400 flex items-center justify-between gap-4">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                    Phoebe AI Cost
+                                  </span>
+                                  <strong className="text-zinc-200">{CURRENCY.symbol}{d.cumulative_cost_with_model_tl?.toFixed(2)}</strong>
+                                </p>
+                                <div className="pt-1.5 border-t border-zinc-800 space-y-0.5">
+                                  <p className="text-emerald-400/90 font-semibold flex items-center justify-between gap-4">
+                                    <span>Saved vs Grid:</span>
+                                    <span>+{CURRENCY.symbol}{d.cumulative_savings_tl?.toFixed(2)}</span>
+                                  </p>
+                                  <p className="text-zinc-300 font-medium flex items-center justify-between gap-4">
+                                    <span>Extra vs Naive:</span>
+                                    <span>+{CURRENCY.symbol}{d.cumulative_ai_vs_naive_savings_tl?.toFixed(2)}</span>
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           );
@@ -1166,7 +1218,7 @@ export default function Phoebe({ isTabActive = true }) {
                       type="monotone"
                       dataKey="cumulative_cost_naive_tl"
                       stroke={THEME_COLORS.charts.naiveBatteryCost}
-                      strokeWidth={2}
+                      strokeWidth={1.5}
                       strokeDasharray="4 4"
                       fill="none"
                       isAnimationActive={false}
@@ -1175,7 +1227,7 @@ export default function Phoebe({ isTabActive = true }) {
                       type="monotone"
                       dataKey="cumulative_cost_with_model_tl"
                       stroke={THEME_COLORS.charts.withModelCost}
-                      strokeWidth={2.5}
+                      strokeWidth={2}
                       fill="url(#costWithGrad)"
                       isAnimationActive={false}
                     />
@@ -1204,7 +1256,7 @@ export default function Phoebe({ isTabActive = true }) {
               <div
                 key={index}
                 className={`flex items-start gap-2.5 leading-relaxed ${
-                  index === visibleLogs.length - 1 ? 'text-amber-400 font-semibold' : 'text-zinc-400'
+                  index === visibleLogs.length - 1 ? 'text-zinc-200 font-semibold' : 'text-zinc-400'
                 }`}
               >
                 <span className="text-zinc-600 select-none">›</span>
@@ -1236,7 +1288,7 @@ export default function Phoebe({ isTabActive = true }) {
             </div>
             <div className="flex justify-between pt-2.5">
               <span className="text-zinc-400">Naive Battery Depletion:</span>
-              <span className="text-amber-400 font-mono font-semibold">
+              <span className="text-zinc-300 font-mono font-medium">
                 {simulation?.financials?.naive_depleted_timestamp
                   ? `${simulation.financials.naive_depleted_timestamp} (Runs Dry Early)`
                   : 'Sustained full horizon'}
@@ -1244,7 +1296,7 @@ export default function Phoebe({ isTabActive = true }) {
             </div>
             <div className="flex justify-between pt-2.5">
               <span className="text-zinc-400">Extra AI vs. Naive Savings:</span>
-              <span className="text-amber-400 font-mono font-bold">
+              <span className="text-emerald-400/90 font-mono font-semibold">
                 +{CURRENCY.symbol}{simulation?.financials?.ai_vs_naive_savings_tl?.toFixed(2) || '0.00'} (+{simulation?.financials?.ai_vs_naive_percent || 0}%)
               </span>
             </div>

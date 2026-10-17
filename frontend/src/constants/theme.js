@@ -43,13 +43,13 @@ export const THEME_COLORS = {
     monthlyBar: '#f59e0b',        // Amber solar generation bars
     cashflowProfit: '#10b981',    // Emerald profit area
     cashflowLoss: '#f43f5e',      // Rose loss area
-    withoutModelUsage: '#f43f5e', // Rose line: Grid usage without model
-    naiveBatteryUsage: '#f59e0b', // Amber line: Naive battery
-    withModelUsage: '#10b981',    // Emerald line: Phoebe AI
-    batteryDischarge: '#38bdf8',  // Cyan line: Battery discharge output
-    withoutModelCost: '#f43f5e',  // Rose line: Cumulative cost without model
-    naiveBatteryCost: '#f59e0b',  // Amber line: Cumulative cost with naive battery
-    withModelCost: '#10b981',     // Emerald line: Cumulative cost with Phoebe AI
+    withoutModelUsage: '#fb7185', // Soft muted rose: Grid usage without model
+    naiveBatteryUsage: '#fbbf24', // Muted amber: Naive battery
+    withModelUsage: '#34d399',    // Calm emerald: Phoebe AI
+    batteryDischarge: '#38bdf8',  // Soft sky blue: Battery discharge output
+    withoutModelCost: '#fb7185',  // Soft muted rose: Cumulative cost without model
+    naiveBatteryCost: '#fbbf24',  // Muted amber: Cumulative cost with naive battery
+    withModelCost: '#34d399',     // Calm emerald: Cumulative cost with Phoebe AI
     gridLines: '#27272a',         // zinc-800 grid lines
     axisText: '#71717a',          // zinc-500 axis labels
     referenceLine: '#52525b',     // zinc-600 reference line
